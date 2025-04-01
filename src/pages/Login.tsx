@@ -57,7 +57,7 @@ const Login = () => {
               className="h-16 w-auto"
             />
           </div>
-          <h1 className="text-3xl font-bold text-primary">SRMC Optometry Camp Management</h1>
+          <h1 className="text-3xl font-bold text-primary">SRIHER Camp Management</h1>
         </div>
 
         <Card className="w-full shadow-lg">
