@@ -1,20 +1,69 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, Save, ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
+import { Eye, Save, ArrowLeft, ArrowRight, CheckCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+
+// Mock camps data
+const camps = [
+  {
+    id: "1",
+    name: "Rural Eye Camp - April 2025",
+    location: "Kanchipuram District",
+    date: "4/15/2025",
+  },
+  {
+    id: "2",
+    name: "School Screening - March 2025",
+    location: "Chennai Public School",
+    date: "3/20/2025",
+  },
+  {
+    id: "3",
+    name: "Corporate Eye Camp - February 2025",
+    location: "TechSpace Solutions",
+    date: "2/10/2025",
+  },
+  {
+    id: "4",
+    name: "Rural Outreach - January 2025",
+    location: "Villupuram District",
+    date: "1/15/2025",
+  }
+];
+
+// Mock patient data for editing
+const mockPatients = [
+  {
+    id: "p1",
+    campId: "1",
+    name: "Rajesh Kumar",
+    age: "45",
+    sex: "male",
+    history: "Complains of blurry vision for reading, no previous glasses",
+    visionRight: "6/18",
+    visionLeft: "6/12",
+    dryRefractionRight: "+1.50DS/-0.50DCx90",
+    dryRefractionLeft: "+1.75DS/-0.75DCx80",
+    acceptanceRight: "+1.25DS/-0.50DCx90",
+    acceptanceLeft: "+1.50DS/-0.50DCx85",
+    ocularDiagnosis: "Presbyopia, mild astigmatism",
+    outcome: "glasses"
+  }
+];
 
 // Define step schemas
 const patientDemographicsSchema = z.object({
@@ -59,16 +108,22 @@ type PatientFormValues = z.infer<typeof patientFormSchema>;
 
 const PatientEntryPage: React.FC = () => {
   const navigate = useNavigate();
+  const { campId, patientId } = useParams<{ campId: string, patientId?: string }>();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [activeTab, setActiveTab] = useState("demographics");
+  const [completedTabs, setCompletedTabs] = useState<string[]>([]);
   const [isOfflineSaving, setIsOfflineSaving] = useState(false);
   const [isSavedDialogOpen, setIsSavedDialogOpen] = useState(false);
-  const totalSteps = 6;
   
-  // Initialize form with default values
+  const camp = camps.find(c => c.id === campId);
+  const existingPatient = patientId ? mockPatients.find(p => p.id === patientId) : null;
+  
+  const isEditMode = !!existingPatient;
+  
+  // Initialize form with default values or existing patient data
   const form = useForm<PatientFormValues>({
     resolver: zodResolver(patientFormSchema),
-    defaultValues: {
+    defaultValues: existingPatient || {
       name: "",
       age: "",
       sex: "",
@@ -84,49 +139,61 @@ const PatientEntryPage: React.FC = () => {
     },
     mode: "onChange",
   });
-
-  const progress = (currentStep / totalSteps) * 100;
-
-  const handleNext = async () => {
-    // Validate current step
-    let isValid = false;
+  
+  // Update completed tabs based on form data
+  useEffect(() => {
+    const updateCompletedTabs = () => {
+      const formValues = form.getValues();
+      const completed: string[] = [];
+      
+      // Check demographics
+      if (formValues.name && formValues.age && formValues.sex) {
+        completed.push("demographics");
+      }
+      
+      // Check history (optional)
+      if (formValues.history) {
+        completed.push("history");
+      }
+      
+      // Check vision
+      if (formValues.visionRight || formValues.visionLeft) {
+        completed.push("vision");
+      }
+      
+      // Check refraction
+      if (formValues.dryRefractionRight || formValues.dryRefractionLeft || 
+          formValues.acceptanceRight || formValues.acceptanceLeft) {
+        completed.push("refraction");
+      }
+      
+      // Check diagnosis
+      if (formValues.ocularDiagnosis) {
+        completed.push("diagnosis");
+      }
+      
+      // Check outcome
+      if (formValues.outcome) {
+        completed.push("outcome");
+      }
+      
+      setCompletedTabs(completed);
+    };
     
-    if (currentStep === 1) {
-      isValid = await form.trigger(["name", "age", "sex"]);
-    } else if (currentStep === 2) {
-      isValid = await form.trigger(["history"]);
-      isValid = true; // History is optional
-    } else if (currentStep === 3) {
-      isValid = await form.trigger(["visionRight", "visionLeft"]);
-      isValid = true; // Vision is optional
-    } else if (currentStep === 4) {
-      isValid = await form.trigger(["dryRefractionRight", "dryRefractionLeft", "acceptanceRight", "acceptanceLeft"]);
-      isValid = true; // Refraction is optional
-    } else if (currentStep === 5) {
-      isValid = await form.trigger(["ocularDiagnosis"]);
-      isValid = true; // Diagnosis is optional
-    } else if (currentStep === 6) {
-      isValid = await form.trigger(["outcome"]);
+    if (isEditMode) {
+      updateCompletedTabs();
     }
-
-    if (isValid && currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
+  }, [form, isEditMode]);
+  
   const saveProgress = () => {
     // Simulate saving to local storage for offline functionality
     try {
       const formData = form.getValues();
       localStorage.setItem('patientFormData', JSON.stringify({
         data: formData,
-        step: currentStep,
+        campId,
+        patientId,
+        activeTab,
         timestamp: new Date().toISOString(),
       }));
       
@@ -153,26 +220,53 @@ const PatientEntryPage: React.FC = () => {
     console.log("Form submitted:", data);
     // Here you would typically send the data to your backend
     toast({
-      title: "Patient record created",
-      description: "The patient record has been successfully created",
+      title: isEditMode ? "Patient record updated" : "Patient record created",
+      description: isEditMode 
+        ? "The patient record has been successfully updated" 
+        : "The patient record has been successfully created",
     });
     setIsSavedDialogOpen(true);
   };
+  
+  const calculateProgress = () => {
+    const totalSections = 6; // Total number of sections
+    return (completedTabs.length / totalSections) * 100;
+  };
+  
+  if (!camp) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-96">
+          <CardHeader>
+            <CardTitle>Camp Not Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">The requested camp could not be found.</p>
+            <Button onClick={() => navigate("/")}>Return to Dashboard</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <Button variant="ghost" onClick={() => navigate("/")} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(`/camp/${campId}`)} 
+            className="mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Camp Details
           </Button>
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-                <Eye className="h-6 w-6" /> SRMC Eye Camp - Patient Entry
+                <Eye className="h-6 w-6" /> {camp.name}
               </h1>
               <p className="text-muted-foreground">
-                Step {currentStep} of {totalSteps}: {getStepName(currentStep)}
+                {isEditMode ? "Edit Patient Record" : "New Patient Registration"}
               </p>
             </div>
             <Button 
@@ -181,30 +275,77 @@ const PatientEntryPage: React.FC = () => {
               disabled={isOfflineSaving}
               className="flex items-center gap-2"
             >
-              <Save className="h-4 w-4" />
-              {isOfflineSaving ? "Saving..." : "Save Progress"}
+              {isOfflineSaving ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Progress
+                </>
+              )}
             </Button>
           </div>
         </div>
         
         <div className="mb-6">
-          <Progress value={progress} className="h-2" />
-          <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-            <span>Demographics</span>
-            <span>History</span>
-            <span>Vision</span>
-            <span>Refraction</span>
-            <span>Diagnosis</span>
-            <span>Outcome</span>
+          <Progress value={calculateProgress()} className="h-2" />
+          <div className="mt-2 text-sm text-muted-foreground">
+            {completedTabs.length} of 6 sections completed
           </div>
         </div>
 
         <Card className="p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Step 1: Patient Demographics */}
-              {currentStep === 1 && (
-                <div className="space-y-4">
+              <Tabs 
+                value={activeTab} 
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="grid grid-cols-3 md:grid-cols-6 mb-4">
+                  <TabsTrigger 
+                    value="demographics"
+                    className={completedTabs.includes("demographics") ? "border-b-2 border-green-500" : ""}
+                  >
+                    Demographics
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="history"
+                    className={completedTabs.includes("history") ? "border-b-2 border-green-500" : ""}
+                  >
+                    History
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="vision"
+                    className={completedTabs.includes("vision") ? "border-b-2 border-green-500" : ""}
+                  >
+                    Vision
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="refraction"
+                    className={completedTabs.includes("refraction") ? "border-b-2 border-green-500" : ""}
+                  >
+                    Refraction
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="diagnosis"
+                    className={completedTabs.includes("diagnosis") ? "border-b-2 border-green-500" : ""}
+                  >
+                    Diagnosis
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="outcome"
+                    className={completedTabs.includes("outcome") ? "border-b-2 border-green-500" : ""}
+                  >
+                    Outcome
+                  </TabsTrigger>
+                </TabsList>
+                
+                {/* Demographics Tab */}
+                <TabsContent value="demographics" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Patient Demographics</h2>
                   
                   <FormField
@@ -260,12 +401,10 @@ const PatientEntryPage: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                </div>
-              )}
+                </TabsContent>
 
-              {/* Step 2: History Collection */}
-              {currentStep === 2 && (
-                <div className="space-y-4">
+                {/* History Tab */}
+                <TabsContent value="history" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">History Collection</h2>
                   
                   <FormField
@@ -288,12 +427,10 @@ const PatientEntryPage: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                </div>
-              )}
+                </TabsContent>
 
-              {/* Step 3: Vision Check */}
-              {currentStep === 3 && (
-                <div className="space-y-4">
+                {/* Vision Tab */}
+                <TabsContent value="vision" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Vision Check</h2>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -331,12 +468,10 @@ const PatientEntryPage: React.FC = () => {
                       )}
                     />
                   </div>
-                </div>
-              )}
+                </TabsContent>
 
-              {/* Step 4: Dry Refraction and Acceptance */}
-              {currentStep === 4 && (
-                <div className="space-y-4">
+                {/* Refraction Tab */}
+                <TabsContent value="refraction" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Refraction Values</h2>
                   
                   <h3 className="text-md font-medium mt-2">Dry Refraction</h3>
@@ -400,12 +535,10 @@ const PatientEntryPage: React.FC = () => {
                       )}
                     />
                   </div>
-                </div>
-              )}
+                </TabsContent>
 
-              {/* Step 5: Ocular Diagnosis */}
-              {currentStep === 5 && (
-                <div className="space-y-4">
+                {/* Diagnosis Tab */}
+                <TabsContent value="diagnosis" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Ocular Diagnosis</h2>
                   
                   <FormField
@@ -424,12 +557,10 @@ const PatientEntryPage: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                </div>
-              )}
+                </TabsContent>
 
-              {/* Step 6: Outcome Selection */}
-              {currentStep === 6 && (
-                <div className="space-y-4">
+                {/* Outcome Tab */}
+                <TabsContent value="outcome" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Outcome</h2>
                   
                   <FormField
@@ -461,28 +592,21 @@ const PatientEntryPage: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                </div>
-              )}
+                </TabsContent>
+              </Tabs>
 
               <div className="flex justify-between pt-4 border-t">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handlePrevious}
-                  disabled={currentStep === 1}
+                  onClick={() => navigate(`/camp/${campId}`)}
                 >
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Camp
                 </Button>
                 
-                {currentStep < totalSteps ? (
-                  <Button type="button" onClick={handleNext}>
-                    Next <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button type="submit">
-                    Save Patient Record <CheckCircle className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
+                <Button type="submit">
+                  {isEditMode ? "Update" : "Save"} Patient Record <CheckCircle className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </form>
           </Form>
@@ -510,7 +634,7 @@ const PatientEntryPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Patient Record Saved</DialogTitle>
             <DialogDescription>
-              The patient record has been successfully created and saved.
+              The patient record has been successfully {isEditMode ? "updated" : "created"}.
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-center py-6">
@@ -519,34 +643,27 @@ const PatientEntryPage: React.FC = () => {
             </div>
           </div>
           <DialogFooter className="gap-2 sm:justify-center">
-            <Button variant="outline" onClick={() => navigate("/")}>
-              Back to Dashboard
+            <Button 
+              variant="outline" 
+              onClick={() => navigate(`/camp/${campId}`)}
+            >
+              Return to Camp
             </Button>
-            <Button onClick={() => {
-              setIsSavedDialogOpen(false);
-              form.reset();
-              setCurrentStep(1);
-            }}>
-              Add Another Patient
-            </Button>
+            {!isEditMode && (
+              <Button onClick={() => {
+                setIsSavedDialogOpen(false);
+                form.reset();
+                setActiveTab("demographics");
+                setCompletedTabs([]);
+              }}>
+                Add Another Patient
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 };
-
-// Helper function to get step name
-function getStepName(step: number): string {
-  switch (step) {
-    case 1: return "Patient Demographics";
-    case 2: return "History Collection";
-    case 3: return "Vision Check";
-    case 4: return "Refraction Values";
-    case 5: return "Ocular Diagnosis";
-    case 6: return "Outcome Selection";
-    default: return "";
-  }
-}
 
 export default PatientEntryPage;

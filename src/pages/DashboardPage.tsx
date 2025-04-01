@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,14 +8,13 @@ import {
   Calendar, 
   Users, 
   FileText, 
-  UserPlus, 
   MapPin,
   Filter,
   ChevronDown,
   ChartBar,
   ChartPie
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   BarChart, 
   Bar, 
@@ -56,6 +54,7 @@ import {
 
 const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [filterDateRange, setFilterDateRange] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
   const [filterStudent, setFilterStudent] = useState("all");
@@ -196,6 +195,10 @@ const DashboardPage: React.FC = () => {
     { month: 'Jun', patients: 0 }
   ];
 
+  const handleViewCampDetails = (campId: string) => {
+    navigate(`/camp/${campId}`);
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
@@ -218,11 +221,6 @@ const DashboardPage: React.FC = () => {
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Eye Camp Dashboard</h2>
             <div className="flex gap-3">
-              <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                <Link to="/patient-entry">
-                  <UserPlus className="mr-2 h-5 w-5" /> Add New Patient
-                </Link>
-              </Button>
               {user?.role === "admin" && (
                 <Button asChild className="bg-green-600 hover:bg-green-700">
                   <Link to="/create-camp">
@@ -481,7 +479,12 @@ const DashboardPage: React.FC = () => {
                       <TableCell>{camp.students.length} students</TableCell>
                       <TableCell className="text-right">{camp.patients}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm">View Details</Button>
+                        <Button 
+                          size="sm"
+                          onClick={() => handleViewCampDetails(camp.id)}
+                        >
+                          View Details
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

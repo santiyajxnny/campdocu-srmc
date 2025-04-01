@@ -14,6 +14,7 @@ import Unauthorized from "./pages/Unauthorized";
 import DashboardPage from "./pages/DashboardPage";
 import CreateCampPage from "./pages/CreateCampPage";
 import PatientEntryPage from "./pages/PatientEntryPage";
+import CampDetailsPage from "./pages/CampDetailsPage";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -47,7 +48,23 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="/patient-entry"
+                  path="/camp/:campId"
+                  element={
+                    <ProtectedRoute>
+                      <CampDetailsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/patient-entry/:campId"
+                  element={
+                    <ProtectedRoute>
+                      <PatientEntryPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/patient-entry/:campId/:patientId"
                   element={
                     <ProtectedRoute>
                       <PatientEntryPage />
