@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Unauthorized from "./pages/Unauthorized";
 import DashboardPage from "./pages/DashboardPage";
+import CreateCampPage from "./pages/CreateCampPage";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -33,6 +34,14 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <DashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/create-camp"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                      <CreateCampPage />
                     </ProtectedRoute>
                   }
                 />
