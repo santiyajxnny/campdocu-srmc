@@ -2,7 +2,7 @@
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, PlusCircle, Calendar, Users, FileText } from "lucide-react";
+import { LogOut, PlusCircle, Calendar, Users, FileText, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const DashboardPage: React.FC = () => {
@@ -49,13 +49,20 @@ const DashboardPage: React.FC = () => {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Eye Camp Dashboard</h2>
-            {user?.role === "admin" && (
-              <Button asChild className="bg-green-600 hover:bg-green-700">
-                <Link to="/create-camp">
-                  <PlusCircle className="mr-2 h-5 w-5" /> Create New Camp
+            <div className="flex gap-3">
+              <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                <Link to="/patient-entry">
+                  <UserPlus className="mr-2 h-5 w-5" /> Add New Patient
                 </Link>
               </Button>
-            )}
+              {user?.role === "admin" && (
+                <Button asChild className="bg-green-600 hover:bg-green-700">
+                  <Link to="/create-camp">
+                    <PlusCircle className="mr-2 h-5 w-5" /> Create New Camp
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Unauthorized from "./pages/Unauthorized";
 import DashboardPage from "./pages/DashboardPage";
 import CreateCampPage from "./pages/CreateCampPage";
+import PatientEntryPage from "./pages/PatientEntryPage";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -42,6 +43,14 @@ const App = () => {
                   element={
                     <ProtectedRoute allowedRoles={["admin"]}>
                       <CreateCampPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/patient-entry"
+                  element={
+                    <ProtectedRoute>
+                      <PatientEntryPage />
                     </ProtectedRoute>
                   }
                 />
