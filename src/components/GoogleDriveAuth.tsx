@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Google, LogOut, RefreshCw } from 'lucide-react';
+import { LogOut, RefreshCw } from 'lucide-react';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import driveService from '@/services/GoogleDriveService';
 import { toast } from 'sonner';
