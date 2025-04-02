@@ -1,8 +1,57 @@
+
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Calendar, User, Settings } from "lucide-react";
+import { 
+  PlusCircle, 
+  Calendar, 
+  User, 
+  Settings, 
+  Users, 
+  FileText, 
+  Filter, 
+  ChartBar, 
+  ChartPie, 
+  MapPin 
+} from "lucide-react";
+import { 
+  Card, 
+  CardHeader, 
+  CardFooter, 
+  CardTitle, 
+  CardDescription, 
+  CardContent 
+} from "@/components/ui/card";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell
+} from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from "@/components/ui/pagination";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip as RechartsTooltip, 
+  Legend, 
+  ResponsiveContainer, 
+  PieChart, 
+  Pie, 
+  Cell 
+} from "recharts";
 import driveService from "@/services/GoogleDriveService";
 import { toast } from "sonner";
 
@@ -359,7 +408,7 @@ const DashboardPage: React.FC = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
-                      <Tooltip />
+                      <RechartsTooltip />
                       <Bar dataKey="patients" fill="#8884d8" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -391,7 +440,7 @@ const DashboardPage: React.FC = () => {
                           <Cell key={`cell-${index}`} fill={OUTCOME_COLORS[index % OUTCOME_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <RechartsTooltip />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -427,7 +476,7 @@ const DashboardPage: React.FC = () => {
                           <Cell key={`cell-${index}`} fill={DIAGNOSIS_COLORS[index % DIAGNOSIS_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <RechartsTooltip />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
