@@ -1,8 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { toast } from "sonner";
-import { Eye, Save, ArrowLeft, ArrowRight, CheckCircle, RefreshCw, Upload, Database } from "lucide-react";
+import { Eye, Save, ArrowLeft, ArrowRight, CheckCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import driveService from "@/services/GoogleDriveService";
-import ImageUploader from "@/components/ImageUploader";
 
 // Mock camps data
 const camps = [
@@ -111,14 +109,11 @@ type PatientFormValues = z.infer<typeof patientFormSchema>;
 const PatientEntryPage: React.FC = () => {
   const navigate = useNavigate();
   const { campId, patientId } = useParams<{ campId: string, patientId?: string }>();
-  const { toast: uiToast } = useToast();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("demographics");
   const [completedTabs, setCompletedTabs] = useState<string[]>([]);
   const [isOfflineSaving, setIsOfflineSaving] = useState(false);
   const [isSavedDialogOpen, setIsSavedDialogOpen] = useState(false);
-  const [isSyncingToDrive, setIsSyncingToDrive] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [showImageUploader, setShowImageUploader] = useState(false);
   
   const camp = camps.find(c => c.id === campId);
   const existingPatient = patientId ? mockPatients.find(p => p.id === patientId) : null;
@@ -194,32 +189,7 @@ const PatientEntryPage: React.FC = () => {
     // Simulate saving to local storage for offline functionality
     try {
       const formData = form.getValues();
-      
-      // Add timestamps
-      const patientData = {
-        ...formData,
-        id: patientId || `patient-${Date.now()}`,
-        campId,
-        updatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-      };
-      
-      // Save to localStorage
-      const savedPatients = JSON.parse(localStorage.getItem('patientData') || '{}');
-      if (!savedPatients[campId]) {
-        savedPatients[campId] = [];
-      }
-      
-      // Update existing or add new
-      const existingIndex = savedPatients[campId].findIndex((p: any) => p.id === patientData.id);
-      if (existingIndex >= 0) {
-        savedPatients[campId][existingIndex] = patientData;
-      } else {
-        savedPatients[campId].push(patientData);
-      }
-      
-      localStorage.setItem('patientData', JSON.stringify(savedPatients));
-      localStorage.setItem('patientFormProgress', JSON.stringify({
+      localStorage.setItem('patientFormData', JSON.stringify({
         data: formData,
         campId,
         patientId,
@@ -228,7 +198,7 @@ const PatientEntryPage: React.FC = () => {
       }));
       
       setIsOfflineSaving(true);
-      uiToast({
+      toast({
         title: "Progress saved",
         description: "Your data has been saved locally",
       });
@@ -238,8 +208,7 @@ const PatientEntryPage: React.FC = () => {
         setIsOfflineSaving(false);
       }, 1500);
     } catch (error) {
-      console.error('Error saving data:', error);
-      uiToast({
+      toast({
         title: "Error saving data",
         description: "There was a problem saving your progress",
         variant: "destructive",
@@ -247,107 +216,15 @@ const PatientEntryPage: React.FC = () => {
     }
   };
 
-  const syncWithDrive = async () => {
-    if (!driveService.isAuthenticated()) {
-      toast.error("Please connect to Google Drive first");
-      return;
-    }
-    
-    if (!campId) return;
-    
-    setIsSyncingToDrive(true);
-    try {
-      // Get all patients for this camp
-      const savedPatients = JSON.parse(localStorage.getItem('patientData') || '{}');
-      const campPatients = savedPatients[campId] || [];
-      
-      if (campPatients.length === 0) {
-        toast.info("No patient data to sync");
-        return;
-      }
-      
-      // Get spreadsheet ID for this camp
-      const campResources = JSON.parse(localStorage.getItem('campResources') || '{}');
-      const spreadsheetId = campResources[campId]?.spreadsheetId;
-      
-      if (!spreadsheetId) {
-        toast.error("Spreadsheet ID not found for this camp");
-        return;
-      }
-      
-      // Sync data to Google Sheets
-      const success = await driveService.syncPatientData(campId, campPatients, spreadsheetId);
-      
-      if (success) {
-        toast.success("Successfully synced patient data to Google Sheets");
-      }
-    } catch (error) {
-      console.error('Error syncing with Drive:', error);
-      toast.error("Failed to sync with Google Drive");
-    } finally {
-      setIsSyncingToDrive(false);
-    }
-  };
-
-  const handleImageUploaded = (imageUrl: string) => {
-    setImageUrls(prev => [...prev, imageUrl]);
-    setShowImageUploader(false);
-    toast.success("Image uploaded successfully");
-  };
-
   const onSubmit = (data: PatientFormValues) => {
     console.log("Form submitted:", data);
-    
-    // Create patient object with ID and timestamps
-    const newPatientId = patientId || `patient-${Date.now()}`;
-    const patientData = {
-      ...data,
-      id: newPatientId,
-      campId,
-      images: imageUrls,
-      updatedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-    };
-    
-    // Save to localStorage
-    const savedPatients = JSON.parse(localStorage.getItem('patientData') || '{}');
-    if (!savedPatients[campId]) {
-      savedPatients[campId] = [];
-    }
-    
-    // Update existing or add new
-    const existingIndex = savedPatients[campId].findIndex((p: any) => p.id === patientData.id);
-    if (existingIndex >= 0) {
-      savedPatients[campId][existingIndex] = patientData;
-    } else {
-      savedPatients[campId].push(patientData);
-    }
-    
-    localStorage.setItem('patientData', JSON.stringify(savedPatients));
-    
-    // Try to sync with Google Drive if connected
-    if (driveService.isAuthenticated()) {
-      const campResources = JSON.parse(localStorage.getItem('campResources') || '{}');
-      const spreadsheetId = campResources[campId]?.spreadsheetId;
-      
-      if (spreadsheetId) {
-        driveService.syncPatientData(campId, savedPatients[campId], spreadsheetId)
-          .then(success => {
-            if (success) {
-              console.log("Synced with Google Drive");
-            }
-          })
-          .catch(err => console.error("Failed to sync:", err));
-      }
-    }
-    
-    uiToast({
+    // Here you would typically send the data to your backend
+    toast({
       title: isEditMode ? "Patient record updated" : "Patient record created",
       description: isEditMode 
         ? "The patient record has been successfully updated" 
         : "The patient record has been successfully created",
     });
-    
     setIsSavedDialogOpen(true);
   };
   
@@ -392,45 +269,24 @@ const PatientEntryPage: React.FC = () => {
                 {isEditMode ? "Edit Patient Record" : "New Patient Registration"}
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={saveProgress}
-                disabled={isOfflineSaving}
-                className="flex items-center gap-2"
-              >
-                {isOfflineSaving ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    Save Progress
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={syncWithDrive}
-                disabled={isSyncingToDrive || !driveService.isAuthenticated()}
-                className="flex items-center gap-2"
-              >
-                {isSyncingToDrive ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    Syncing...
-                  </>
-                ) : (
-                  <>
-                    <Database className="h-4 w-4" />
-                    Sync to Drive
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button 
+              variant="outline" 
+              onClick={saveProgress}
+              disabled={isOfflineSaving}
+              className="flex items-center gap-2"
+            >
+              {isOfflineSaving ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Progress
+                </>
+              )}
+            </Button>
           </div>
         </div>
         
@@ -488,6 +344,7 @@ const PatientEntryPage: React.FC = () => {
                   </TabsTrigger>
                 </TabsList>
                 
+                {/* Demographics Tab */}
                 <TabsContent value="demographics" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Patient Demographics</h2>
                   
@@ -546,6 +403,7 @@ const PatientEntryPage: React.FC = () => {
                   />
                 </TabsContent>
 
+                {/* History Tab */}
                 <TabsContent value="history" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">History Collection</h2>
                   
@@ -569,62 +427,9 @@ const PatientEntryPage: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
-                  <div className="mt-6 border-t pt-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-medium">Patient Documentation</h3>
-                      
-                      {!showImageUploader && (
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setShowImageUploader(true)}
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          Add Image
-                        </Button>
-                      )}
-                    </div>
-                    
-                    {showImageUploader && patientId && (
-                      <ImageUploader 
-                        campId={campId || ''} 
-                        patientId={patientId}
-                        onImageUploaded={handleImageUploaded}
-                      />
-                    )}
-                    
-                    {!patientId && showImageUploader && (
-                      <div className="bg-yellow-50 p-4 rounded-md text-sm">
-                        Please save the patient record first before uploading images.
-                      </div>
-                    )}
-                    
-                    {imageUrls.length > 0 && (
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium mb-2">Attached Images ({imageUrls.length})</h4>
-                        <div className="grid grid-cols-1 gap-2">
-                          {imageUrls.map((url, index) => (
-                            <div key={index} className="flex justify-between items-center p-2 bg-muted rounded">
-                              <span className="text-sm truncate max-w-[200px]">Image {index + 1}</span>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                asChild
-                              >
-                                <a href={url} target="_blank" rel="noopener noreferrer">
-                                  View
-                                </a>
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </TabsContent>
 
+                {/* Vision Tab */}
                 <TabsContent value="vision" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Vision Check</h2>
                   
@@ -665,6 +470,7 @@ const PatientEntryPage: React.FC = () => {
                   </div>
                 </TabsContent>
 
+                {/* Refraction Tab */}
                 <TabsContent value="refraction" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Refraction Values</h2>
                   
@@ -731,6 +537,7 @@ const PatientEntryPage: React.FC = () => {
                   </div>
                 </TabsContent>
 
+                {/* Diagnosis Tab */}
                 <TabsContent value="diagnosis" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Ocular Diagnosis</h2>
                   
@@ -752,6 +559,7 @@ const PatientEntryPage: React.FC = () => {
                   />
                 </TabsContent>
 
+                {/* Outcome Tab */}
                 <TabsContent value="outcome" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Outcome</h2>
                   
@@ -805,6 +613,7 @@ const PatientEntryPage: React.FC = () => {
         </Card>
       </div>
 
+      {/* Offline saving indicator */}
       <Sheet open={isOfflineSaving} onOpenChange={setIsOfflineSaving}>
         <SheetContent side="bottom" className="h-auto">
           <SheetHeader>
@@ -819,6 +628,7 @@ const PatientEntryPage: React.FC = () => {
         </SheetContent>
       </Sheet>
 
+      {/* Success Dialog */}
       <Dialog open={isSavedDialogOpen} onOpenChange={setIsSavedDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -845,7 +655,6 @@ const PatientEntryPage: React.FC = () => {
                 form.reset();
                 setActiveTab("demographics");
                 setCompletedTabs([]);
-                setImageUrls([]);
               }}>
                 Add Another Patient
               </Button>

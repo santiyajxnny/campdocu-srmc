@@ -5,9 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, Folder, FileSpreadsheet, MapPin, PlusCircle, AlertCircle } from "lucide-react";
+import { CalendarIcon, Folder, FileSpreadsheet, MapPin, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { toast } from "sonner";
 
 import {
   Form,
@@ -44,8 +43,6 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import GoogleDriveAuth from "@/components/GoogleDriveAuth";
-import driveService from "@/services/GoogleDriveService";
 
 // Mock student data (would come from API in production)
 const STUDENTS = [
@@ -64,14 +61,13 @@ const formSchema = z.object({
   useGeolocation: z.boolean().default(false),
   description: z.string().min(10, { message: "Description must be at least 10 characters" }),
   assignedStudents: z.array(z.string()).min(1, { message: "Please assign at least one student" }),
-  createDriveResources: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 const CreateCampPage = () => {
   const navigate = useNavigate();
-  const { toast: uiToast } = useToast();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [resourceLinks, setResourceLinks] = useState<{driveUrl: string, excelUrl: string}>({
@@ -79,8 +75,6 @@ const CreateCampPage = () => {
     excelUrl: ""
   });
   const [geoLocation, setGeoLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [driveError, setDriveError] = useState<string | null>(null);
-  const [isDriveConnected, setIsDriveConnected] = useState(driveService.isAuthenticated());
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -91,7 +85,6 @@ const CreateCampPage = () => {
       description: "",
       useGeolocation: false,
       assignedStudents: [],
-      createDriveResources: true,
     },
   });
 
@@ -102,19 +95,19 @@ const CreateCampPage = () => {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         });
-        uiToast({
+        toast({
           title: "Location captured",
           description: `Latitude: ${position.coords.latitude.toFixed(4)}, Longitude: ${position.coords.longitude.toFixed(4)}`,
         });
       }, () => {
-        uiToast({
+        toast({
           title: "Location error",
           description: "Unable to retrieve your location",
           variant: "destructive",
         });
       });
     } else {
-      uiToast({
+      toast({
         title: "Geolocation not supported",
         description: "Your browser does not support geolocation",
         variant: "destructive",
@@ -122,30 +115,9 @@ const CreateCampPage = () => {
     }
   };
 
-  // Check Drive connection status whenever the form is rendered
-  React.useEffect(() => {
-    setIsDriveConnected(driveService.isAuthenticated());
-
-    // If user has selected to create Drive resources but is not connected, show a message
-    if (form.watch("createDriveResources") && !driveService.isAuthenticated()) {
-      setDriveError("Google Drive connection required. Please connect to Google Drive below.");
-    } else {
-      setDriveError(null);
-    }
-  }, [form.watch("createDriveResources")]);
-
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
-    setDriveError(null);
-
     try {
-      // Check if user wants to create Drive resources but is not authenticated
-      if (data.createDriveResources && !driveService.isAuthenticated()) {
-        setDriveError("Google Drive connection required. Please connect to Google Drive below.");
-        setIsSubmitting(false);
-        return;
-      }
-
       // Include geolocation data if available
       const campData = {
         ...data,
@@ -154,51 +126,22 @@ const CreateCampPage = () => {
       
       console.log("Creating camp with data:", campData);
       
-      // Create a camp ID (in a real app, this would come from the backend)
-      const campId = `camp-${Date.now()}`;
+      // Simulate API call to create camp, Drive folder and Excel sheet
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Store students by email for Drive sharing
-      const studentEmails = data.assignedStudents.map(id => {
-        const student = STUDENTS.find(s => s.id === id);
-        return student?.email || "";
-      }).filter(email => email);
+      // Mock response with Drive and Excel URLs
+      const mockDriveUrl = `https://drive.google.com/drive/folders/camp-${Date.now()}`;
+      const mockExcelUrl = `https://docs.google.com/spreadsheets/d/camp-excel-${Date.now()}`;
       
-      let driveUrls = { driveUrl: "", excelUrl: "" };
+      setResourceLinks({
+        driveUrl: mockDriveUrl,
+        excelUrl: mockExcelUrl
+      });
       
-      // Create Google Drive resources if requested
-      if (data.createDriveResources) {
-        const driveResources = await driveService.createCampResources(
-          data.name,
-          data.date,
-          studentEmails
-        );
-        
-        if (driveResources) {
-          driveUrls = {
-            driveUrl: driveResources.folderUrl,
-            excelUrl: driveResources.spreadsheetUrl
-          };
-          
-          // Store the resources in localStorage for demo purposes
-          // In a real app, this would be stored in your database
-          const campResources = JSON.parse(localStorage.getItem('campResources') || '{}');
-          campResources[campId] = driveResources;
-          localStorage.setItem('campResources', JSON.stringify(campResources));
-        }
-      } else {
-        // Simulate creating mock URLs if not using Google Drive
-        driveUrls = {
-          driveUrl: `https://example.com/folders/${campId}`,
-          excelUrl: `https://example.com/sheets/${campId}`
-        };
-      }
-      
-      setResourceLinks(driveUrls);
       setShowSuccessDialog(true);
       
     } catch (error) {
-      console.error("Error creating camp:", error);
-      uiToast({
+      toast({
         title: "Failed to create camp",
         description: "There was an error creating your camp. Please try again.",
         variant: "destructive",
@@ -211,13 +154,11 @@ const CreateCampPage = () => {
   const handleFinish = () => {
     setShowSuccessDialog(false);
     navigate("/"); // Navigate back to dashboard
-    uiToast({
+    toast({
       title: "Camp created successfully",
       description: "Your new camp has been set up and is ready for patient data.",
     });
   };
-
-  const watchCreateDriveResources = form.watch("createDriveResources");
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -397,57 +338,6 @@ const CreateCampPage = () => {
                 </FormItem>
               )}
             />
-
-            <div className="space-y-4 border-t pt-6">
-              <h3 className="text-lg font-medium">Google Drive Integration</h3>
-              
-              <FormField
-                control={form.control}
-                name="createDriveResources"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Create Google Drive resources
-                      </FormLabel>
-                      <FormDescription>
-                        Automatically create a folder structure and Excel template in Google Drive
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {watchCreateDriveResources && (
-                <div className="bg-muted p-4 rounded-md">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium">Google Drive Connection</h4>
-                      <div className="flex items-center">
-                        <span className={`h-2 w-2 rounded-full mr-2 ${isDriveConnected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                        <span className="text-sm">{isDriveConnected ? 'Connected' : 'Not Connected'}</span>
-                      </div>
-                    </div>
-                    
-                    {driveError && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Connection Required</AlertTitle>
-                        <AlertDescription>{driveError}</AlertDescription>
-                      </Alert>
-                    )}
-                    
-                    <GoogleDriveAuth />
-                  </div>
-                </div>
-              )}
-            </div>
 
             <div className="flex justify-end gap-4 pt-4">
               <Button
