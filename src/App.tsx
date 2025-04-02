@@ -15,6 +15,7 @@ import DashboardPage from "./pages/DashboardPage";
 import CreateCampPage from "./pages/CreateCampPage";
 import PatientEntryPage from "./pages/PatientEntryPage";
 import CampDetailsPage from "./pages/CampDetailsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -68,6 +69,14 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <PatientEntryPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <SettingsPage />
                     </ProtectedRoute>
                   }
                 />
