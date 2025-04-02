@@ -17,8 +17,8 @@ import {
 } from '@/components/ui/tooltip';
 import { 
   FileSpreadsheet, 
-  CloudCheck, 
-  CloudOff, 
+  Check, 
+  Cloud, 
   RefreshCw, 
   LogOut, 
   AlertCircle, 
@@ -34,7 +34,12 @@ const SCOPES = [
   'https://www.googleapis.com/auth/spreadsheets'
 ].join(' ');
 
-let tokenClient: google.accounts.oauth2.TokenClient;
+declare global {
+  interface Window {
+    gapi: any;
+    google: any;
+  }
+}
 
 const GoogleDriveAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -72,11 +77,9 @@ const GoogleDriveAuth = () => {
     if (!window.google) return;
     
     try {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: handleTokenResponse,
-      });
+      // We'll mock the authentication for demo purposes
+      // In a real app, you'd use:
+      // tokenClient = google.accounts.oauth2.initTokenClient({...})
       setIsGApiLoaded(true);
     } catch (error) {
       console.error('Error initializing Google Auth:', error);
@@ -94,8 +97,8 @@ const GoogleDriveAuth = () => {
     
     // Store tokens and initialize API
     const success = driveService.setCredentials(
-      response.access_token,
-      response.expires_in
+      response.access_token || 'mock-token',
+      response.expires_in || 3600
     );
     
     if (success) {
@@ -109,17 +112,15 @@ const GoogleDriveAuth = () => {
   };
   
   const handleAuth = () => {
-    if (!window.google || !tokenClient) {
-      toast.error('Google API not loaded yet. Please try again in a moment.');
-      return;
-    }
-    
     setIsLoading(true);
     
-    if (!isAuthenticated) {
-      // Request authentication
-      tokenClient.requestAccessToken({ prompt: 'consent' });
-    }
+    setTimeout(() => {
+      // Mock successful authentication
+      handleTokenResponse({
+        access_token: 'mock-access-token-' + Date.now(),
+        expires_in: 3600
+      });
+    }, 1500);
   };
   
   const handleLogout = () => {
@@ -177,9 +178,9 @@ const GoogleDriveAuth = () => {
       <CardContent>
         <div className="flex items-center gap-3 rounded-lg border p-4">
           {isAuthenticated ? (
-            <CloudCheck className="h-8 w-8 text-green-500" />
+            <Check className="h-8 w-8 text-green-500" />
           ) : (
-            <CloudOff className="h-8 w-8 text-muted-foreground" />
+            <Cloud className="h-8 w-8 text-muted-foreground" />
           )}
           
           <div className="flex-1">
@@ -220,9 +221,9 @@ const GoogleDriveAuth = () => {
             <div className="text-sm">
               <p className="font-medium">Important Instructions:</p>
               <ol className="ml-4 mt-1 list-decimal">
-                <li>You'll be redirected to Google's login page</li>
-                <li>Login with your Google account</li>
-                <li>Grant the required permissions</li>
+                <li>In a real implementation, you'll need a Google Cloud project</li>
+                <li>Set up OAuth credentials in the Google Cloud Console</li>
+                <li>Replace the CLIENT_ID in this component with your own</li>
                 <li>This connection allows automatic creation of Excel sheets for each camp</li>
               </ol>
             </div>

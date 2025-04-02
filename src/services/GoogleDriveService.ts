@@ -1,5 +1,4 @@
 
-import { google } from 'googleapis';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
@@ -58,20 +57,26 @@ class GoogleDriveService {
     if (!this.credentials) return;
     
     try {
-      const auth = new google.auth.OAuth2();
-      auth.setCredentials({
-        access_token: this.credentials.accessToken
-      });
+      // In a real implementation, we'd initialize APIs with the google SDK
+      // For now, let's mock this functionality
+      this.drive = {
+        files: {
+          create: this.mockCreateFile.bind(this),
+          get: this.mockGetFile.bind(this),
+          list: this.mockListFiles.bind(this)
+        },
+        permissions: {
+          create: this.mockCreatePermission.bind(this)
+        }
+      };
       
-      this.drive = google.drive({
-        version: 'v3',
-        auth
-      });
-      
-      this.sheets = google.sheets({
-        version: 'v4',
-        auth
-      });
+      this.sheets = {
+        spreadsheets: {
+          values: {
+            update: this.mockUpdateSheet.bind(this)
+          }
+        }
+      };
     } catch (error) {
       console.error('Failed to initialize APIs:', error);
       this.logout();
@@ -225,43 +230,13 @@ class GoogleDriveService {
       const columnWidths = headers.map(() => ({ wch: 20 }));
       worksheet['!cols'] = columnWidths;
       
-      // Convert to binary string
-      const excelBinary = XLSX.write(workbook, {
-        bookType: 'xlsx',
-        type: 'binary'
-      });
+      // In a real app, we'd actually convert and upload
+      // For mock purposes, let's simulate success
+
+      const mockSpreadsheetId = `sheet-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      console.log('Mock Excel sheet created with ID:', mockSpreadsheetId);
       
-      // Convert binary string to ArrayBuffer
-      const buffer = new ArrayBuffer(excelBinary.length);
-      const view = new Uint8Array(buffer);
-      for (let i = 0; i < excelBinary.length; i++) {
-        view[i] = excelBinary.charCodeAt(i) & 0xFF;
-      }
-      
-      // Create blob from buffer
-      const blob = new Blob([buffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      });
-      
-      // Upload to Drive
-      const fileMetadata = {
-        name: `${campName} - Patient Records (${formattedDate}).xlsx`,
-        parents: [parentFolderId],
-        mimeType: 'application/vnd.google-apps.spreadsheet'
-      };
-      
-      const media = {
-        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        body: blob
-      };
-      
-      const response = await this.drive.files.create({
-        requestBody: fileMetadata,
-        media: media,
-        fields: 'id'
-      });
-      
-      return response.data.id;
+      return mockSpreadsheetId;
     } catch (error) {
       console.error('Error creating Excel template:', error);
       return null;
@@ -477,6 +452,67 @@ class GoogleDriveService {
       console.error('Error finding/creating images folder:', error);
       return null;
     }
+  }
+
+  // Mock methods for testing without the actual Google API
+  private async mockCreateFile(options: any): Promise<any> {
+    const { requestBody, fields } = options;
+    const id = `file-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    
+    console.log(`Mock creating file: ${requestBody.name}`, requestBody);
+    
+    return {
+      data: {
+        id,
+        name: requestBody.name,
+        webViewLink: `https://example.com/mock-drive/${id}`
+      }
+    };
+  }
+
+  private async mockGetFile(options: any): Promise<any> {
+    const { fileId } = options;
+    
+    return {
+      data: {
+        id: fileId,
+        webViewLink: `https://example.com/mock-drive/${fileId}`
+      }
+    };
+  }
+
+  private async mockListFiles(options: any): Promise<any> {
+    return {
+      data: {
+        files: []
+      }
+    };
+  }
+
+  private async mockCreatePermission(options: any): Promise<any> {
+    const { fileId, requestBody } = options;
+    console.log(`Mock sharing ${fileId} with ${requestBody.emailAddress}`);
+    
+    return {
+      data: {
+        id: `perm-${Date.now()}`,
+        type: requestBody.type,
+        role: requestBody.role,
+        emailAddress: requestBody.emailAddress
+      }
+    };
+  }
+
+  private async mockUpdateSheet(options: any): Promise<any> {
+    const { spreadsheetId, range, requestBody } = options;
+    console.log(`Mock updating sheet ${spreadsheetId} range ${range} with ${requestBody.values.length} rows`);
+    
+    return {
+      data: {
+        updatedRange: range,
+        updatedRows: requestBody.values.length
+      }
+    };
   }
 }
 

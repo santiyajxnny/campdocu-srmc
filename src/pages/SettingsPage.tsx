@@ -24,6 +24,7 @@ import {
   FileSpreadsheet, 
   Download 
 } from 'lucide-react';
+import { toast } from 'sonner';
 import GoogleDriveAuth from '@/components/GoogleDriveAuth';
 
 const SettingsPage = () => {
@@ -111,7 +112,7 @@ const SettingsPage = () => {
                     </div>
                     <Button variant="outline" size="sm" onClick={() => {
                       // In a real app, this would download an actual template
-                      toast.info('Template download feature will be implemented in production');
+                      toast("Template download feature will be implemented in production");
                     }}>
                       <Download className="mr-2 h-4 w-4" />
                       Download
