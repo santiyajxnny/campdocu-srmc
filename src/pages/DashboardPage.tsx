@@ -1,56 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  LogOut, 
-  PlusCircle, 
-  Calendar, 
-  Users, 
-  FileText, 
-  MapPin,
-  Filter,
-  ChevronDown,
-  ChartBar,
-  ChartPie
-} from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  Legend,
-  LineChart,
-  Line
-} from "recharts";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent
-} from "@/components/ui/chart";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from "@/components/ui/pagination";
+import { PlusCircle, Calendar, User, Settings } from "lucide-react";
+import driveService from "@/services/GoogleDriveService";
+import { toast } from "sonner";
+
+const DashboardHeader = ({ user }) => {
+  const navigate = useNavigate();
+  const isAdmin = user?.role === "admin";
+
+  return (
+    <header className="px-4 lg:px-6 h-14 flex items-center border-b">
+      <div className="flex items-center gap-4 w-full">
+        <img
+          src="/lovable-uploads/d8c03cf5-63b2-4773-a974-6a484df8414b.png"
+          alt="SRMC Logo"
+          className="h-8 w-auto"
+        />
+        <h1 className="text-lg font-semibold">SRIHER Eye Camp Management</h1>
+        
+        <div className="ml-auto flex items-center gap-2">
+          {isAdmin && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate("/create-camp")}
+              className="hidden md:flex"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create Camp
+            </Button>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Settings"
+            onClick={() => navigate("/settings")}
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
+          
+          <div className="flex items-center gap-2 text-sm">
+            <span className="hidden md:inline text-muted-foreground">
+              {user?.email}
+            </span>
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <User className="h-4 w-4" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
 
 const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -199,23 +203,25 @@ const DashboardPage: React.FC = () => {
     navigate(`/camp/${campId}`);
   };
 
+  useEffect(() => {
+    const isAuthenticated = driveService.isAuthenticated();
+    
+    // If admin and not authenticated with Drive, show a toast notification
+    if (user?.role === "admin" && !isAuthenticated) {
+      toast.info('Connect to Google Drive to enable Excel integration', {
+        action: {
+          label: 'Connect',
+          onClick: () => navigate('/settings')
+        },
+        duration: 6000
+      });
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-primary">SRMC Optometry Camp Management</h1>
-            <p className="text-muted-foreground">
-              Welcome back, {user?.email} ({user?.role})
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm">{user?.email} ({user?.role})</span>
-            <Button variant="ghost" onClick={logout}>
-              <LogOut className="mr-2 h-4 w-4" /> Logout
-            </Button>
-          </div>
-        </div>
+        <DashboardHeader user={user} />
 
         <div className="space-y-6">
           <div className="flex justify-between items-center">
