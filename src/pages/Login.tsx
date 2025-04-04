@@ -6,20 +6,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { Eye, EyeOff, LogIn, Mail } from "lucide-react";
+
+// List of allowed admin emails for UI display purposes
+const ALLOWED_ADMIN_EMAILS = [
+  "santiyawilliam@gmail.com",
+  // Add the other 4 admin emails here when they're provided
+];
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isStudent, setIsStudent] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [sentEmail, setSentEmail] = useState(false);
   const { login, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if email is a student email
+  // Check if email is an admin email
   useEffect(() => {
-    setIsStudent(email.endsWith("@srmc.com"));
+    setIsAdmin(ALLOWED_ADMIN_EMAILS.includes(email));
   }, [email]);
 
   // If user is already logged in, redirect to home
@@ -32,10 +39,35 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isValidEmail(email)) {
+      return;
+    }
+    
     const success = await login(email, password);
     if (success) {
-      navigate("/");
+      if (!isAdmin) {
+        setSentEmail(true);
+      } else {
+        navigate("/");
+      }
     }
+  };
+
+  const isValidEmail = (email: string): boolean => {
+    if (!email) {
+      return false;
+    }
+    
+    if (ALLOWED_ADMIN_EMAILS.includes(email)) {
+      return true;
+    }
+    
+    if (email.endsWith("@sriher.edu.in")) {
+      return true;
+    }
+    
+    return false;
   };
 
   const togglePasswordVisibility = () => {
@@ -44,6 +76,36 @@ const Login = () => {
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  if (sentEmail) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/10 to-white p-4">
+        <div className="w-full max-w-md">
+          <Card className="w-full shadow-lg">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-bold text-center">Check Your Email</CardTitle>
+              <CardDescription className="text-center">
+                We've sent a login link to {email}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center p-6">
+                <Mail className="mx-auto h-12 w-12 text-primary mb-4" />
+                <p>Please check your inbox and click the link to log in.</p>
+              </div>
+              <Button 
+                className="w-full" 
+                variant="outline" 
+                onClick={() => setSentEmail(false)}
+              >
+                Try another email
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -74,15 +136,20 @@ const Login = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@admin.com or student@srmc.com"
+                  placeholder="your.email@sriher.edu.in"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full"
                 />
+                {email && !isValidEmail(email) && (
+                  <p className="text-sm text-red-500">
+                    Only @sriher.edu.in email addresses are allowed.
+                  </p>
+                )}
               </div>
 
-              {(!isStudent || email === "admin@admin.com") && (
+              {isAdmin && (
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
@@ -92,7 +159,7 @@ const Login = () => {
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      required={email === "admin@admin.com"}
+                      required
                       className="w-full pr-10"
                     />
                     <button
@@ -110,23 +177,20 @@ const Login = () => {
                 </div>
               )}
 
-              {isStudent && email !== "admin@admin.com" && (
+              {!isAdmin && email && isValidEmail(email) && (
                 <div className="text-sm text-blue-600">
-                  Student accounts don't need a password
+                  A login link will be sent to your email
                 </div>
               )}
 
               <Button type="submit" className="w-full">
-                <LogIn className="mr-2 h-4 w-4" /> Login
+                <LogIn className="mr-2 h-4 w-4" /> {isAdmin ? "Login" : "Send Login Link"}
               </Button>
             </form>
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
             <div className="text-sm text-center text-gray-500">
-              Admin account: admin@admin.com / adminpass
-            </div>
-            <div className="text-sm text-center text-gray-500">
-              Student accounts: Use any email with @srmc.com domain
+              Only @sriher.edu.in emails are accepted for students and faculty
             </div>
           </CardFooter>
         </Card>
