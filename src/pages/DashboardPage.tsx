@@ -265,7 +265,7 @@ const DashboardPage: React.FC = () => {
         duration: 6000
       });
     }
-  }, []);
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen bg-background p-6">
