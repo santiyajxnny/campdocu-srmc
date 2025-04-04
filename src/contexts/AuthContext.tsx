@@ -13,7 +13,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password?: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -85,45 +86,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      // Determine if the user is an admin
-      const isAdmin = ALLOWED_ADMIN_EMAILS.includes(email);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      // For admin, require password
-      if (isAdmin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          toast.error(error.message);
-          return false;
-        }
-
-        toast.success("Admin logged in successfully");
-        return true;
+      if (error) {
+        toast.error(error.message);
+        return false;
       }
-      
-      // For students/faculty, allow email login
-      else {
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: {
-            emailRedirectTo: window.location.origin,
-          },
-        });
 
-        if (error) {
-          toast.error(error.message);
-          return false;
-        }
-
-        toast.success("Login link sent to your email");
-        return true;
-      }
+      toast.success("Logged in successfully");
+      return true;
     } catch (error) {
       console.error("Login error:", error);
       toast.error("An error occurred during login");
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signup = async (email: string, password: string): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+
+      // Validate the email format
+      if (!email.endsWith("@sriher.edu.in") && !ALLOWED_ADMIN_EMAILS.includes(email)) {
+        toast.error("Invalid email domain. Only @sriher.edu.in addresses are allowed for registration.");
+        return false;
+      }
+
+      // Register the user with Supabase
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+
+      toast.success("Registration successful! Please check your email to verify your account.");
+      return true;
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast.error("An error occurred during signup");
       return false;
     } finally {
       setIsLoading(false);
@@ -141,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );
