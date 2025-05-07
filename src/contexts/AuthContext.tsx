@@ -65,8 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (email === ADMIN_EMAIL) {
       return "admin";
     } else if (email.endsWith("@sriher.edu.in")) {
-      // For simplicity, all @sriher.edu.in emails that aren't admin are considered students
-      return "student";
+      return "faculty"; // Changed from student to faculty as default for sriher.edu.in emails
     } else {
       // This should not happen with proper validation in the login function
       return "student";
@@ -77,22 +76,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
 
-      // Special case for admin login
+      // Special case for admin login - using hardcoded values first
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        // For admin, we'll create a special session in Supabase
-        // This is a simplified approach - in production you'd want to use proper auth
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log("Admin login attempt with correct credentials");
+        
+        // For admin, we'll create a custom session
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) {
-          toast.error(error.message);
+          console.error("Admin login error:", error);
+          toast.error("Admin login failed: " + error.message);
           return false;
         }
 
-        toast.success("Admin logged in successfully");
-        return true;
+        if (data.user) {
+          console.log("Admin authenticated successfully");
+          setUser({ email: ADMIN_EMAIL, role: "admin" });
+          toast.success("Admin logged in successfully");
+          return true;
+        }
       }
 
       // For regular users, validate the email format
@@ -101,12 +106,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
+      // Regular login through Supabase
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error("Login error:", error);
         toast.error(error.message);
         return false;
       }
@@ -142,9 +149,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/login`,
-        },
       });
 
       if (error) {

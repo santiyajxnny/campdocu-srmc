@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff, LogIn, Mail, UserPlus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,6 +18,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, signup, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,34 +36,82 @@ const Login = () => {
     }
   }, [user, navigate, location]);
 
+  // Function to ensure admin user exists in Supabase
+  useEffect(() => {
+    const setupAdminUser = async () => {
+      try {
+        const { data: existingUser, error: fetchError } = await supabase
+          .from('auth.users')
+          .select('*')
+          .eq('email', 'admin@admin.com')
+          .single();
+        
+        if (fetchError && !existingUser) {
+          console.log("Admin user does not exist in Supabase yet.");
+          // Admin doesn't exist, we'll let it be created on first login
+        }
+      } catch (error) {
+        console.error("Error checking admin user:", error);
+      }
+    };
+    
+    setupAdminUser();
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isValidEmail(email)) {
+      toast.error("Please enter a valid email address");
       return;
     }
     
-    await login(email, password);
+    setIsSubmitting(true);
+    try {
+      const success = await login(email, password);
+      if (success && isAdmin) {
+        toast.success("Welcome, Administrator!");
+        navigate("/admin");
+      } else if (success) {
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("An unexpected error occurred during login");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isValidEmail(email)) {
+      toast.error("Please enter a valid email address");
       return;
     }
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
     
     if (password.length < 6) {
-      alert("Password must be at least 6 characters long");
+      toast.error("Password must be at least 6 characters long");
       return;
     }
     
-    await signup(email, password);
+    setIsSubmitting(true);
+    try {
+      await signup(email, password);
+      // Signup success is handled in the auth context
+      setActiveTab("login");
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast.error("An unexpected error occurred during signup");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isValidEmail = (email: string): boolean => {
@@ -168,9 +219,22 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full">
-                    <LogIn className="mr-2 h-4 w-4" /> Login
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <div className="flex items-center">
+                        <span className="animate-spin mr-2">◌</span> Logging in...
+                      </div>
+                    ) : (
+                      <>
+                        <LogIn className="mr-2 h-4 w-4" /> Login
+                      </>
+                    )}
                   </Button>
+                  
+                  {/* Admin login hint for demo purposes */}
+                  <div className="text-xs text-center text-gray-500 mt-2">
+                    <p>Admin demo: admin@admin.com / adminpass</p>
+                  </div>
                 </form>
               </CardContent>
             </TabsContent>
@@ -244,8 +308,16 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={email === "admin@admin.com"}>
-                    <UserPlus className="mr-2 h-4 w-4" /> Sign Up
+                  <Button type="submit" className="w-full" disabled={isSubmitting || email === "admin@admin.com"}>
+                    {isSubmitting ? (
+                      <div className="flex items-center">
+                        <span className="animate-spin mr-2">◌</span> Signing up...
+                      </div>
+                    ) : (
+                      <>
+                        <UserPlus className="mr-2 h-4 w-4" /> Sign Up
+                      </>
+                    )}
                   </Button>
                 </form>
               </CardContent>
