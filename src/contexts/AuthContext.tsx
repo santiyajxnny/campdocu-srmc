@@ -20,11 +20,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// List of allowed admin emails
-const ALLOWED_ADMIN_EMAILS = [
-  "santiyawilliam@gmail.com",
-  // Add the other 4 admin emails here when they're provided
-];
+// Admin credentials
+const ADMIN_EMAIL = "admin@admin.com";
+const ADMIN_PASSWORD = "adminpass"; // This would normally be hashed and stored securely
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -64,11 +62,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Determine the user role based on email
   const determineUserRole = (email: string): UserRole => {
-    if (ALLOWED_ADMIN_EMAILS.includes(email)) {
+    if (email === ADMIN_EMAIL) {
       return "admin";
     } else if (email.endsWith("@sriher.edu.in")) {
-      // Differentiate between student and faculty based on some convention if needed
-      // For now, all @sriher.edu.in emails that aren't admin are considered students
+      // For simplicity, all @sriher.edu.in emails that aren't admin are considered students
       return "student";
     } else {
       // This should not happen with proper validation in the login function
@@ -80,8 +77,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
 
-      // Validate the email format
-      if (!ALLOWED_ADMIN_EMAILS.includes(email) && !email.endsWith("@sriher.edu.in")) {
+      // Special case for admin login
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        // For admin, we'll create a special session in Supabase
+        // This is a simplified approach - in production you'd want to use proper auth
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          toast.error(error.message);
+          return false;
+        }
+
+        toast.success("Admin logged in successfully");
+        return true;
+      }
+
+      // For regular users, validate the email format
+      if (!email.endsWith("@sriher.edu.in") && email !== ADMIN_EMAIL) {
         toast.error("Invalid email domain. Only @sriher.edu.in addresses are allowed.");
         return false;
       }
@@ -111,8 +126,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
 
+      // Prevent signup with admin email
+      if (email === ADMIN_EMAIL) {
+        toast.error("This email is reserved. Please use a different email address.");
+        return false;
+      }
+
       // Validate the email format
-      if (!email.endsWith("@sriher.edu.in") && !ALLOWED_ADMIN_EMAILS.includes(email)) {
+      if (!email.endsWith("@sriher.edu.in")) {
         toast.error("Invalid email domain. Only @sriher.edu.in addresses are allowed for registration.");
         return false;
       }

@@ -9,12 +9,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Eye, EyeOff, LogIn, Mail, UserPlus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// List of allowed admin emails for UI display purposes
-const ALLOWED_ADMIN_EMAILS = [
-  "santiyawilliam@gmail.com",
-  // Add the other 4 admin emails here when they're provided
-];
-
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +22,7 @@ const Login = () => {
 
   // Check if email is an admin email
   useEffect(() => {
-    setIsAdmin(ALLOWED_ADMIN_EMAILS.includes(email));
+    setIsAdmin(email === "admin@admin.com");
   }, [email]);
 
   // If user is already logged in, redirect to home
@@ -74,7 +68,8 @@ const Login = () => {
       return false;
     }
     
-    if (ALLOWED_ADMIN_EMAILS.includes(email)) {
+    // Allow admin email or @sriher.edu.in domains
+    if (email === "admin@admin.com") {
       return true;
     }
     
@@ -134,7 +129,7 @@ const Login = () => {
                     <Input
                       id="email-login"
                       type="email"
-                      placeholder="your.email@sriher.edu.in"
+                      placeholder="admin@admin.com or your.email@sriher.edu.in"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -142,7 +137,7 @@ const Login = () => {
                     />
                     {email && !isValidEmail(email) && (
                       <p className="text-sm text-red-500">
-                        Only @sriher.edu.in email addresses or authorized admin emails are allowed.
+                        Only @sriher.edu.in email addresses or admin@admin.com are allowed.
                       </p>
                     )}
                   </div>
@@ -199,6 +194,11 @@ const Login = () => {
                         Only @sriher.edu.in email addresses are allowed for registration.
                       </p>
                     )}
+                    {email === "admin@admin.com" && (
+                      <p className="text-sm text-red-500">
+                        Admin registration is not allowed. Please contact system administrator.
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -244,7 +244,7 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full">
+                  <Button type="submit" className="w-full" disabled={email === "admin@admin.com"}>
                     <UserPlus className="mr-2 h-4 w-4" /> Sign Up
                   </Button>
                 </form>
