@@ -76,42 +76,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
 
-      // Special case for admin login - using hardcoded values first
+      // Special case for admin login - using hardcoded values
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
         console.log("Admin login attempt with correct credentials");
         
-        // We need to ensure the admin user exists in Supabase
-        try {
-          // For admin, we first try to sign up if the account doesn't exist
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: ADMIN_EMAIL,
-            password: ADMIN_PASSWORD,
-          });
-          
-          if (signUpError && signUpError.message !== "User already registered") {
-            console.error("Admin signup error:", signUpError);
-            // Continue to login attempt even if signup fails - the account might already exist
-          } else if (signUpData) {
-            console.log("Admin account created or already exists");
-          }
-        } catch (signUpError) {
-          console.error("Error during admin signup attempt:", signUpError);
-          // Continue to login attempt
-        }
-
-        // Now try to log in with admin credentials
+        // Try to sign in the admin user first
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
+        // If there's an error signing in, the admin might not exist yet
         if (error) {
-          console.error("Admin login error:", error);
-          toast.error("Admin login failed: " + error.message);
-          return false;
-        }
+          console.log("Admin login error, attempting to create admin account:", error.message);
+          
+          // Create the admin account if it doesn't exist
+          const { error: signUpError } = await supabase.auth.signUp({
+            email: ADMIN_EMAIL,
+            password: ADMIN_PASSWORD,
+          });
 
-        if (data.user) {
+          // If there was an error signing up (other than "User already registered"),
+          // show an error message and return false
+          if (signUpError && signUpError.message !== "User already registered") {
+            console.error("Admin account creation error:", signUpError);
+            toast.error("Error creating admin account: " + signUpError.message);
+            return false;
+          }
+          
+          // Try to sign in again after creating the account
+          const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          
+          if (retryError) {
+            console.error("Admin login retry error:", retryError);
+            toast.error("Admin login failed: " + retryError.message);
+            return false;
+          }
+          
+          if (retryData.user) {
+            setUser({ email: ADMIN_EMAIL, role: "admin" });
+            toast.success("Admin logged in successfully");
+            return true;
+          }
+        } else if (data.user) {
+          // Admin login successful on first try
           console.log("Admin authenticated successfully");
           setUser({ email: ADMIN_EMAIL, role: "admin" });
           toast.success("Admin logged in successfully");

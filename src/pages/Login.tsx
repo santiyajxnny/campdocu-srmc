@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,9 +34,6 @@ const Login = () => {
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);
-
-  // Remove the problematic code that tries to check if admin exists
-  // Admin verification will be handled in the AuthContext during login
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
