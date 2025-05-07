@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,7 +8,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Eye, EyeOff, LogIn, Mail, UserPlus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -36,27 +34,8 @@ const Login = () => {
     }
   }, [user, navigate, location]);
 
-  // Function to ensure admin user exists in Supabase
-  useEffect(() => {
-    const setupAdminUser = async () => {
-      try {
-        const { data: existingUser, error: fetchError } = await supabase
-          .from('auth.users')
-          .select('*')
-          .eq('email', 'admin@admin.com')
-          .single();
-        
-        if (fetchError && !existingUser) {
-          console.log("Admin user does not exist in Supabase yet.");
-          // Admin doesn't exist, we'll let it be created on first login
-        }
-      } catch (error) {
-        console.error("Error checking admin user:", error);
-      }
-    };
-    
-    setupAdminUser();
-  }, []);
+  // Remove the problematic code that tries to check if admin exists
+  // Admin verification will be handled in the AuthContext during login
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -80,7 +80,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
         console.log("Admin login attempt with correct credentials");
         
-        // For admin, we'll create a custom session
+        // We need to ensure the admin user exists in Supabase
+        try {
+          // For admin, we first try to sign up if the account doesn't exist
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: ADMIN_EMAIL,
+            password: ADMIN_PASSWORD,
+          });
+          
+          if (signUpError && signUpError.message !== "User already registered") {
+            console.error("Admin signup error:", signUpError);
+            // Continue to login attempt even if signup fails - the account might already exist
+          } else if (signUpData) {
+            console.log("Admin account created or already exists");
+          }
+        } catch (signUpError) {
+          console.error("Error during admin signup attempt:", signUpError);
+          // Continue to login attempt
+        }
+
+        // Now try to log in with admin credentials
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
