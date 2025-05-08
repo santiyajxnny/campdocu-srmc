@@ -1,7 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
+// Development mode flag - set to true to bypass Supabase authentication
+const DEV_MODE = true;
 
 type UserRole = "admin" | "student" | "faculty";
 
@@ -24,6 +26,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const ADMIN_EMAIL = "admin@admin.com";
 const ADMIN_PASSWORD = "adminpass"; // This would normally be hashed and stored securely
 
+// Development mode test accounts
+const DEV_TEST_ACCOUNTS = [
+  { email: "faculty@sriher.edu.in", password: "testpass" },
+  { email: "student@sriher.edu.in", password: "testpass" },
+];
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +39,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if the user is already logged in on mount
   useEffect(() => {
     const checkUser = async () => {
+      if (DEV_MODE) {
+        // In dev mode, check localStorage for persisted login
+        const savedUser = localStorage.getItem('devUser');
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        }
+        setIsLoading(false);
+        return;
+      }
+
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         const email = data.session.user.email;
@@ -44,20 +62,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     checkUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session && session.user.email) {
-        const email = session.user.email;
-        const role = determineUserRole(email);
-        setUser({ email, role });
-      } else {
-        setUser(null);
-      }
-      setIsLoading(false);
-    });
+    if (!DEV_MODE) {
+      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session && session.user.email) {
+          const email = session.user.email;
+          const role = determineUserRole(email);
+          setUser({ email, role });
+        } else {
+          setUser(null);
+        }
+        setIsLoading(false);
+      });
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+      return () => {
+        authListener.subscription.unsubscribe();
+      };
+    }
   }, []);
 
   // Determine the user role based on email
@@ -65,9 +85,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (email === ADMIN_EMAIL) {
       return "admin";
     } else if (email.endsWith("@sriher.edu.in")) {
-      return "faculty"; // Changed from student to faculty as default for sriher.edu.in emails
+      return "faculty";
     } else {
-      // This should not happen with proper validation in the login function
       return "student";
     }
   };
@@ -76,63 +95,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
 
-      // Special case for admin login - using hardcoded values
+      // Special case for admin login
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        console.log("Admin login attempt with correct credentials");
-        
-        // Try to sign in the admin user first
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        // If there's an error signing in, the admin might not exist yet
-        if (error) {
-          console.log("Admin login error, attempting to create admin account:", error.message);
-          
-          // Create the admin account if it doesn't exist
-          const { error: signUpError } = await supabase.auth.signUp({
-            email: ADMIN_EMAIL,
-            password: ADMIN_PASSWORD,
-          });
-
-          // If there was an error signing up (other than "User already registered"),
-          // show an error message and return false
-          if (signUpError && signUpError.message !== "User already registered") {
-            console.error("Admin account creation error:", signUpError);
-            toast.error("Error creating admin account: " + signUpError.message);
-            return false;
-          }
-          
-          // Try to sign in again after creating the account
-          const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          
-          if (retryError) {
-            console.error("Admin login retry error:", retryError);
-            toast.error("Admin login failed: " + retryError.message);
-            return false;
-          }
-          
-          if (retryData.user) {
-            setUser({ email: ADMIN_EMAIL, role: "admin" });
-            toast.success("Admin logged in successfully");
-            return true;
-          }
-        } else if (data.user) {
-          // Admin login successful on first try
-          console.log("Admin authenticated successfully");
-          setUser({ email: ADMIN_EMAIL, role: "admin" });
-          toast.success("Admin logged in successfully");
-          return true;
+        const adminUser = { email: ADMIN_EMAIL, role: "admin" as UserRole };
+        setUser(adminUser);
+        if (DEV_MODE) {
+          localStorage.setItem('devUser', JSON.stringify(adminUser));
         }
+        toast.success("Admin logged in successfully");
+        return true;
       }
 
       // For regular users, validate the email format
       if (!email.endsWith("@sriher.edu.in") && email !== ADMIN_EMAIL) {
         toast.error("Invalid email domain. Only @sriher.edu.in addresses are allowed.");
+        return false;
+      }
+
+      if (DEV_MODE) {
+        // In dev mode, check against test accounts or allow any valid email
+        const isTestAccount = DEV_TEST_ACCOUNTS.some(
+          account => account.email === email && account.password === password
+        );
+        
+        if (isTestAccount || password === "testpass") {
+          const role = determineUserRole(email);
+          const newUser = { email, role };
+          setUser(newUser);
+          localStorage.setItem('devUser', JSON.stringify(newUser));
+          toast.success("Logged in successfully (Development Mode)");
+          return true;
+        }
+        
+        toast.error("Invalid credentials");
         return false;
       }
 
@@ -175,6 +170,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
+      if (DEV_MODE) {
+        // In dev mode, simulate successful signup
+        toast.success("Registration successful! (Development Mode)");
+        // Auto-login in dev mode
+        const role = determineUserRole(email);
+        const newUser = { email, role };
+        setUser(newUser);
+        localStorage.setItem('devUser', JSON.stringify(newUser));
+        return true;
+      }
+
       // Register the user with Supabase
       const { error } = await supabase.auth.signUp({
         email,
@@ -198,12 +204,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error(error.message);
-    } else {
+    if (DEV_MODE) {
+      localStorage.removeItem('devUser');
       setUser(null);
-      toast.info("Logged out successfully");
+      toast.success("Logged out successfully (Development Mode)");
+      return;
+    }
+
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      toast.success("Logged out successfully");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("An error occurred during logout");
     }
   };
 
