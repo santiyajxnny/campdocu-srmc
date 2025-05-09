@@ -359,7 +359,7 @@ const PatientEntryPage: React.FC = () => {
                     <div className="grid grid-cols-3 gap-2">
                       <div></div>
                       <div className="text-left font-medium">Right Eye (OD)</div>
-                      <div className="text-center font-medium">Left Eye (OS)</div>
+                      <div className="text-left font-medium">Left Eye (OS)</div>
                     </div>
 
                     {/* Distant Vision */}
