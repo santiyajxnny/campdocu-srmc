@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, Save, ArrowLeft, ArrowRight, CheckCircle, RefreshCw } from "lucide-react";
+import { Eye, Save, ArrowLeft, ArrowRight, CheckCircle, RefreshCw, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,10 +77,18 @@ const visionSchema = z.object({
   nearVisionLeft: z.string().optional()
 });
 const refractionSchema = z.object({
-  dryRefractionRight: z.string().optional(),
-  dryRefractionLeft: z.string().optional(),
-  acceptanceRight: z.string().optional(),
-  acceptanceLeft: z.string().optional()
+  rightEyeSph: z.string().optional(),
+  rightEyeCyl: z.string().optional(),
+  rightEyeAxis: z.string().optional(),
+  leftEyeSph: z.string().optional(),
+  leftEyeCyl: z.string().optional(),
+  leftEyeAxis: z.string().optional(),
+  acceptanceRightSph: z.string().optional(),
+  acceptanceRightCyl: z.string().optional(),
+  acceptanceRightAxis: z.string().optional(),
+  acceptanceLeftSph: z.string().optional(),
+  acceptanceLeftCyl: z.string().optional(),
+  acceptanceLeftAxis: z.string().optional()
 });
 const diagnosisSchema = z.object({
   ocularDiagnosis: z.string().optional()
@@ -124,10 +132,18 @@ const PatientEntryPage: React.FC = () => {
       distantVisionLeft: "",
       nearVisionRight: "",
       nearVisionLeft: "",
-      dryRefractionRight: "",
-      dryRefractionLeft: "",
-      acceptanceRight: "",
-      acceptanceLeft: "",
+      rightEyeSph: "",
+      rightEyeCyl: "",
+      rightEyeAxis: "",
+      leftEyeSph: "",
+      leftEyeCyl: "",
+      leftEyeAxis: "",
+      acceptanceRightSph: "",
+      acceptanceRightCyl: "",
+      acceptanceRightAxis: "",
+      acceptanceLeftSph: "",
+      acceptanceLeftCyl: "",
+      acceptanceLeftAxis: "",
       ocularDiagnosis: "",
       outcome: ""
     },
@@ -156,7 +172,7 @@ const PatientEntryPage: React.FC = () => {
       }
 
       // Check refraction
-      if (formValues.dryRefractionRight || formValues.dryRefractionLeft || formValues.acceptanceRight || formValues.acceptanceLeft) {
+      if (formValues.rightEyeSph || formValues.rightEyeCyl || formValues.rightEyeAxis || formValues.leftEyeSph || formValues.leftEyeCyl || formValues.leftEyeAxis || formValues.acceptanceRightSph || formValues.acceptanceRightCyl || formValues.acceptanceRightAxis || formValues.acceptanceLeftSph || formValues.acceptanceLeftCyl || formValues.acceptanceLeftAxis) {
         completed.push("refraction");
       }
 
@@ -462,54 +478,528 @@ const PatientEntryPage: React.FC = () => {
                   </div>
                 </TabsContent>
 
-                {/* Refraction Tab */}
-                <TabsContent value="refraction" className="space-y-4">
-                  <h2 className="text-xl font-semibold mb-4">Refraction Values</h2>
+                {/* Refraction Tab - Updated with better UI */}
+                <TabsContent value="refraction" className="space-y-6">
+                  <h2 className="text-xl font-semibold mb-2">Refraction Values</h2>
                   
-                  <h3 className="text-md font-medium mt-2">Dry Refraction</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="dryRefractionRight" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Right Eye (OD)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., +1.00DS/-0.50DCx180" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
+                  {/* Dry Refraction Section */}
+                  <div className="rounded-lg border bg-card p-6">
+                    <h3 className="text-lg font-medium mb-4">Dry Refraction</h3>
                     
-                    <FormField control={form.control} name="dryRefractionLeft" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Left Eye (OS)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., +1.00DS/-0.50DCx180" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
-                  </div>
-                  
-                  <h3 className="text-md font-medium mt-4">Acceptance</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="acceptanceRight" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Right Eye (OD)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., +0.75DS/-0.50DCx180" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
+                    {/* Labels Row */}
+                    <div className="grid grid-cols-2 gap-6 mb-2">
+                      <div className="text-center font-medium">Right Eye (OD)</div>
+                      <div className="text-center font-medium">Left Eye (OS)</div>
+                    </div>
                     
-                    <FormField control={form.control} name="acceptanceLeft" render={({
-                    field
-                  }) => <FormItem>
-                          <FormLabel>Left Eye (OS)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., +0.75DS/-0.50DCx180" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>} />
+                    {/* Input Fields Grid */}
+                    <div className="grid grid-cols-2 gap-6 mb-6">
+                      {/* Right Eye Group */}
+                      <div className="rounded-md border bg-background p-4">
+                        <div className="grid grid-cols-3 gap-2 mb-2">
+                          <div className="text-center text-sm font-medium">Sph</div>
+                          <div className="text-center text-sm font-medium">Cyl</div>
+                          <div className="text-center text-sm font-medium">Axis</div>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2">
+                          {/* Sphere Input */}
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("rightEyeSph");
+                                form.setValue("rightEyeSph", adjustValue(currentValue, false));
+                              }}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <FormField
+                              control={form.control}
+                              name="rightEyeSph"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input 
+                                      className="text-center" 
+                                      placeholder="+/-" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("rightEyeSph");
+                                form.setValue("rightEyeSph", adjustValue(currentValue, true));
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Cylinder Input */}
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("rightEyeCyl");
+                                form.setValue("rightEyeCyl", adjustValue(currentValue, false));
+                              }}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <FormField
+                              control={form.control}
+                              name="rightEyeCyl"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input 
+                                      className="text-center" 
+                                      placeholder="+/-" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("rightEyeCyl");
+                                form.setValue("rightEyeCyl", adjustValue(currentValue, true));
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Axis Input */}
+                          <FormField
+                            control={form.control}
+                            name="rightEyeAxis"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    className="text-center" 
+                                    placeholder="180" 
+                                    max="180"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        {/* Formatted Display */}
+                        <div className="mt-4 text-center p-2 bg-slate-50 rounded border">
+                          {formatRefractionValue(
+                            form.watch("rightEyeSph"), 
+                            form.watch("rightEyeCyl"), 
+                            form.watch("rightEyeAxis")
+                          ) || "Example: +1.00DS/-0.50DCx180"}
+                        </div>
+                      </div>
+                      
+                      {/* Left Eye Group */}
+                      <div className="rounded-md border bg-background p-4">
+                        <div className="grid grid-cols-3 gap-2 mb-2">
+                          <div className="text-center text-sm font-medium">Sph</div>
+                          <div className="text-center text-sm font-medium">Cyl</div>
+                          <div className="text-center text-sm font-medium">Axis</div>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2">
+                          {/* Sphere Input */}
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("leftEyeSph");
+                                form.setValue("leftEyeSph", adjustValue(currentValue, false));
+                              }}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <FormField
+                              control={form.control}
+                              name="leftEyeSph"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input 
+                                      className="text-center" 
+                                      placeholder="+/-" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("leftEyeSph");
+                                form.setValue("leftEyeSph", adjustValue(currentValue, true));
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Cylinder Input */}
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("leftEyeCyl");
+                                form.setValue("leftEyeCyl", adjustValue(currentValue, false));
+                              }}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <FormField
+                              control={form.control}
+                              name="leftEyeCyl"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input 
+                                      className="text-center" 
+                                      placeholder="+/-" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("leftEyeCyl");
+                                form.setValue("leftEyeCyl", adjustValue(currentValue, true));
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Axis Input */}
+                          <FormField
+                            control={form.control}
+                            name="leftEyeAxis"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    className="text-center" 
+                                    placeholder="180"
+                                    max="180"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        {/* Formatted Display */}
+                        <div className="mt-4 text-center p-2 bg-slate-50 rounded border">
+                          {formatRefractionValue(
+                            form.watch("leftEyeSph"), 
+                            form.watch("leftEyeCyl"), 
+                            form.watch("leftEyeAxis")
+                          ) || "Example: +1.00DS/-0.50DCx180"}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Acceptance Section */}
+                    <h3 className="text-lg font-medium mt-8 mb-4">Acceptance</h3>
+                    
+                    {/* Input Fields Grid - Acceptance */}
+                    <div className="grid grid-cols-2 gap-6">
+                      {/* Right Eye Group - Acceptance */}
+                      <div className="rounded-md border bg-background p-4">
+                        <div className="grid grid-cols-3 gap-2 mb-2">
+                          <div className="text-center text-sm font-medium">Sph</div>
+                          <div className="text-center text-sm font-medium">Cyl</div>
+                          <div className="text-center text-sm font-medium">Axis</div>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2">
+                          {/* Sphere Input */}
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("acceptanceRightSph");
+                                form.setValue("acceptanceRightSph", adjustValue(currentValue, false));
+                              }}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <FormField
+                              control={form.control}
+                              name="acceptanceRightSph"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input 
+                                      className="text-center" 
+                                      placeholder="+/-" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("acceptanceRightSph");
+                                form.setValue("acceptanceRightSph", adjustValue(currentValue, true));
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Cylinder Input */}
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("acceptanceRightCyl");
+                                form.setValue("acceptanceRightCyl", adjustValue(currentValue, false));
+                              }}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <FormField
+                              control={form.control}
+                              name="acceptanceRightCyl"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input 
+                                      className="text-center" 
+                                      placeholder="+/-" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("acceptanceRightCyl");
+                                form.setValue("acceptanceRightCyl", adjustValue(currentValue, true));
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Axis Input */}
+                          <FormField
+                            control={form.control}
+                            name="acceptanceRightAxis"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    className="text-center" 
+                                    placeholder="180"
+                                    max="180"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        {/* Formatted Display */}
+                        <div className="mt-4 text-center p-2 bg-slate-50 rounded border">
+                          {formatRefractionValue(
+                            form.watch("acceptanceRightSph"), 
+                            form.watch("acceptanceRightCyl"), 
+                            form.watch("acceptanceRightAxis")
+                          ) || "Example: +1.00DS/-0.50DCx180"}
+                        </div>
+                      </div>
+                      
+                      {/* Left Eye Group - Acceptance */}
+                      <div className="rounded-md border bg-background p-4">
+                        <div className="grid grid-cols-3 gap-2 mb-2">
+                          <div className="text-center text-sm font-medium">Sph</div>
+                          <div className="text-center text-sm font-medium">Cyl</div>
+                          <div className="text-center text-sm font-medium">Axis</div>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-2">
+                          {/* Sphere Input */}
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("acceptanceLeftSph");
+                                form.setValue("acceptanceLeftSph", adjustValue(currentValue, false));
+                              }}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <FormField
+                              control={form.control}
+                              name="acceptanceLeftSph"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input 
+                                      className="text-center" 
+                                      placeholder="+/-" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("acceptanceLeftSph");
+                                form.setValue("acceptanceLeftSph", adjustValue(currentValue, true));
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Cylinder Input */}
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("acceptanceLeftCyl");
+                                form.setValue("acceptanceLeftCyl", adjustValue(currentValue, false));
+                              }}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <FormField
+                              control={form.control}
+                              name="acceptanceLeftCyl"
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormControl>
+                                    <Input 
+                                      className="text-center" 
+                                      placeholder="+/-" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-full" 
+                              onClick={() => {
+                                const currentValue = form.getValues("acceptanceLeftCyl");
+                                form.setValue("acceptanceLeftCyl", adjustValue(currentValue, true));
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          {/* Axis Input */}
+                          <FormField
+                            control={form.control}
+                            name="acceptanceLeftAxis"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    className="text-center" 
+                                    placeholder="180"
+                                    max="180"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        {/* Formatted Display */}
+                        <div className="mt-4 text-center p-2 bg-slate-50 rounded border">
+                          {formatRefractionValue(
+                            form.watch("acceptanceLeftSph"), 
+                            form.watch("acceptanceLeftCyl"), 
+                            form.watch("acceptanceLeftAxis")
+                          ) || "Example: +1.00DS/-0.50DCx180"}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </TabsContent>
 
