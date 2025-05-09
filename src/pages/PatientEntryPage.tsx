@@ -18,6 +18,39 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Label } from "@/components/ui/label";
 
+// Helper function to adjust refraction values (incrementing/decrementing by 0.25)
+const adjustValue = (currentValue: string, increment: boolean): string => {
+  // Convert empty string to 0
+  const numValue = currentValue ? parseFloat(currentValue) : 0;
+  
+  // Determine the step size (0.25)
+  const step = 0.25;
+  
+  // Calculate the new value based on whether we're incrementing or decrementing
+  const newValue = increment ? numValue + step : numValue - step;
+  
+  // Format to ensure we always show 2 decimal places when needed
+  return newValue.toFixed(2).replace(/\.00$/, '');
+};
+
+// Helper function to format refraction values in the standard optical notation
+const formatRefractionValue = (sph: string, cyl: string, axis: string): string => {
+  if (!sph && !cyl && !axis) return "";
+  
+  // Format sphere value
+  const sphereFormatted = sph ? `${sph}DS` : "";
+  
+  // Only include cylinder and axis if both are present
+  let cylinderFormatted = "";
+  if (cyl && axis) {
+    cylinderFormatted = `/${cyl}DCx${axis}`;
+  } else if (cyl) {
+    cylinderFormatted = `/${cyl}DC`;
+  }
+  
+  return `${sphereFormatted}${cylinderFormatted}`;
+};
+
 // Mock camps data
 const camps = [{
   id: "1",
