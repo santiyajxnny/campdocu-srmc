@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -13,9 +12,11 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Label } from "@/components/ui/label";
 
 // Mock camps data
 const camps = [
@@ -76,9 +77,12 @@ const historySchema = z.object({
   history: z.string().optional(),
 });
 
+// Update the vision schema to include both distant and near vision
 const visionSchema = z.object({
-  visionRight: z.string().optional(),
-  visionLeft: z.string().optional(),
+  distantVisionRight: z.string().optional(),
+  distantVisionLeft: z.string().optional(),
+  nearVisionRight: z.string().optional(),
+  nearVisionLeft: z.string().optional(),
 });
 
 const refractionSchema = z.object({
@@ -128,8 +132,10 @@ const PatientEntryPage: React.FC = () => {
       age: "",
       sex: "",
       history: "",
-      visionRight: "",
-      visionLeft: "",
+      distantVisionRight: "",
+      distantVisionLeft: "",
+      nearVisionRight: "",
+      nearVisionLeft: "",
       dryRefractionRight: "",
       dryRefractionLeft: "",
       acceptanceRight: "",
@@ -157,7 +163,7 @@ const PatientEntryPage: React.FC = () => {
       }
       
       // Check vision
-      if (formValues.visionRight || formValues.visionLeft) {
+      if (formValues.distantVisionRight || formValues.distantVisionLeft || formValues.nearVisionRight || formValues.nearVisionLeft) {
         completed.push("vision");
       }
       
@@ -429,44 +435,158 @@ const PatientEntryPage: React.FC = () => {
                   />
                 </TabsContent>
 
-                {/* Vision Tab */}
+                {/* Vision Tab - Updated with distant and near vision */}
                 <TabsContent value="vision" className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Vision Check</h2>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="visionRight"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Right Eye (OD)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., 6/9, 6/12" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Record visual acuity
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="visionLeft"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Left Eye (OS)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., 6/9, 6/12" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Record visual acuity
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div></div>
+                      <div className="text-center font-medium">Right Eye (OD)</div>
+                      <div className="text-center font-medium">Left Eye (OS)</div>
+                    </div>
+
+                    {/* Distant Vision */}
+                    <div className="grid grid-cols-3 gap-2 items-center">
+                      <div className="flex items-center">
+                        <Label className="font-medium">Distant</Label>
+                        <HoverCard>
+                          <HoverCardTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-4 w-4 p-0 ml-1">
+                              ?
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-80">
+                            <p>Distant vision typically measured in 6/X format (metric) or 20/X format (US). Enter numerator/denominator.</p>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </div>
+
+                      {/* Right Eye Distant Vision */}
+                      <div className="flex items-center gap-2">
+                        <FormField
+                          control={form.control}
+                          name="distantVisionRight"
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <div className="flex items-center">
+                                  <Input 
+                                    placeholder="6" 
+                                    className="w-16 text-center" 
+                                    {...field} 
+                                  />
+                                  <span className="mx-1">/</span>
+                                  <Input 
+                                    placeholder="6" 
+                                    className="w-16 text-center" 
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Left Eye Distant Vision */}
+                      <div className="flex items-center gap-2">
+                        <FormField
+                          control={form.control}
+                          name="distantVisionLeft"
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <div className="flex items-center">
+                                  <Input 
+                                    placeholder="6" 
+                                    className="w-16 text-center" 
+                                    {...field} 
+                                  />
+                                  <span className="mx-1">/</span>
+                                  <Input 
+                                    placeholder="6" 
+                                    className="w-16 text-center" 
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Near Vision */}
+                    <div className="grid grid-cols-3 gap-2 items-center">
+                      <div className="flex items-center">
+                        <Label className="font-medium">Near</Label>
+                        <HoverCard>
+                          <HoverCardTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-4 w-4 p-0 ml-1">
+                              ?
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-80">
+                            <p>Near vision typically measured in N format (N5, N6, etc). Enter N value/distance.</p>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </div>
+
+                      {/* Right Eye Near Vision */}
+                      <div className="flex items-center gap-2">
+                        <FormField
+                          control={form.control}
+                          name="nearVisionRight"
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <div className="flex items-center">
+                                  <Input 
+                                    placeholder="N" 
+                                    className="w-16 text-center" 
+                                    {...field} 
+                                  />
+                                  <span className="mx-1">/</span>
+                                  <Input 
+                                    placeholder="cm" 
+                                    className="w-16 text-center" 
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Left Eye Near Vision */}
+                      <div className="flex items-center gap-2">
+                        <FormField
+                          control={form.control}
+                          name="nearVisionLeft"
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <div className="flex items-center">
+                                  <Input 
+                                    placeholder="N" 
+                                    className="w-16 text-center" 
+                                    {...field} 
+                                  />
+                                  <span className="mx-1">/</span>
+                                  <Input 
+                                    placeholder="cm" 
+                                    className="w-16 text-center" 
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </TabsContent>
 
