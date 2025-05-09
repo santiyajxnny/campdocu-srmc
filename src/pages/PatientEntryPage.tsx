@@ -368,7 +368,7 @@ const PatientEntryPage: React.FC = () => {
                         <Label className="font-medium">Distant</Label>
                         <HoverCard>
                           <HoverCardTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-4 w-4 p-0 ml-1">
+                            <Button variant="ghost" size="sm" className="h-4 w-4 p-0 ml-1 bg-sky-300 hover:bg-sky-200">
                               ?
                             </Button>
                           </HoverCardTrigger>
