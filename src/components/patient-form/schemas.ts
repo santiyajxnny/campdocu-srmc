@@ -1,3 +1,4 @@
+
 import * as z from "zod"
 
 // Define the schema for patient form
@@ -35,6 +36,16 @@ export const patientFormSchema = z.object({
   acceptanceLeftAxis: z.string().optional(),
   acceptanceRightRefractionNote: z.string().optional(),
   acceptanceLeftRefractionNote: z.string().optional(),
+
+  // Add Given fields
+  addGivenRightSph: z.string().optional(),
+  addGivenRightCyl: z.string().optional(),
+  addGivenRightAxis: z.string().optional(),
+  addGivenLeftSph: z.string().optional(),
+  addGivenLeftCyl: z.string().optional(),
+  addGivenLeftAxis: z.string().optional(),
+  addGivenRightRefractionNote: z.string().optional(),
+  addGivenLeftRefractionNote: z.string().optional(),
 
   // Diagnosis fields
   ocularDiagnosis: z.string().optional(),
