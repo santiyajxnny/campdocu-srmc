@@ -1,55 +1,46 @@
+import * as z from "zod"
 
-import { z } from "zod";
-
-// Define individual schemas for validation
-export const patientDemographicsSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  age: z.string().min(1, "Age is required"),
-  sex: z.string().min(1, "Sex selection is required")
-});
-
-export const historySchema = z.object({
-  history: z.string().optional()
-});
-
-// Update the vision schema to include both distant and near vision
-export const visionSchema = z.object({
+// Define the schema for patient form
+export const patientFormSchema = z.object({
+  // Demographics fields
+  name: z.string().min(1, { message: "Name is required" }),
+  age: z.string().min(1, { message: "Age is required" }),
+  sex: z.string().min(1, { message: "Sex is required" }),
+  
+  // History fields
+  history: z.string().optional(),
+  
+  // Vision fields
   distantVisionRight: z.string().optional(),
   distantVisionLeft: z.string().optional(),
   nearVisionRight: z.string().optional(),
-  nearVisionLeft: z.string().optional()
-});
-
-export const refractionSchema = z.object({
+  nearVisionLeft: z.string().optional(),
+  
+  // Refraction fields
   rightEyeSph: z.string().optional(),
   rightEyeCyl: z.string().optional(),
   rightEyeAxis: z.string().optional(),
   leftEyeSph: z.string().optional(),
   leftEyeCyl: z.string().optional(),
   leftEyeAxis: z.string().optional(),
+  rightEyeRefractionNote: z.string().optional(),
+  leftEyeRefractionNote: z.string().optional(),
+  
+  // Acceptance fields
   acceptanceRightSph: z.string().optional(),
   acceptanceRightCyl: z.string().optional(),
   acceptanceRightAxis: z.string().optional(),
   acceptanceLeftSph: z.string().optional(),
   acceptanceLeftCyl: z.string().optional(),
-  acceptanceLeftAxis: z.string().optional()
+  acceptanceLeftAxis: z.string().optional(),
+  acceptanceRightRefractionNote: z.string().optional(),
+  acceptanceLeftRefractionNote: z.string().optional(),
+
+  // Diagnosis fields
+  ocularDiagnosis: z.string().optional(),
+  
+  // Outcome fields
+  outcome: z.string().optional(),
 });
 
-export const diagnosisSchema = z.object({
-  ocularDiagnosis: z.string().optional()
-});
-
-export const outcomeSchema = z.object({
-  outcome: z.string().min(1, "Outcome selection is required")
-});
-
-// Combined schema for the entire form
-export const patientFormSchema = patientDemographicsSchema
-  .merge(historySchema)
-  .merge(visionSchema)
-  .merge(refractionSchema)
-  .merge(diagnosisSchema)
-  .merge(outcomeSchema);
-
-// Type for form values derived from the schema
 export type PatientFormValues = z.infer<typeof patientFormSchema>;

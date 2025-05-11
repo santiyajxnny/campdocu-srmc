@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { FormField, FormItem, FormControl } from "@/components/ui/form";
 import { RefractionInput } from "@/components/ui/refraction-input";
+import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
 import { formatRefractionValue } from "@/utils/refractionUtils";
 import { Control, UseFormWatch } from "react-hook-form";
@@ -125,15 +126,32 @@ const RefractionForm: React.FC<RefractionFormProps> = ({ control, watch }) => {
               />
             </div>
             
-            {/* Formatted Display */}
-            <div className="mt-4 text-center p-2 bg-slate-50 rounded border">
-              {formatRefractionValue(
-                rightSphPositive,
-                watch("rightEyeSph") || "", 
-                rightCylPositive,
-                watch("rightEyeCyl") || "", 
-                watch("rightEyeAxis") || ""
-              ) || "Example: +1.00DS/-0.50DCx180"}
+            {/* Formatted Display and Additional Input */}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="p-2 bg-slate-50 rounded border flex items-center justify-center text-sm">
+                {formatRefractionValue(
+                  rightSphPositive,
+                  watch("rightEyeSph") || "", 
+                  rightCylPositive,
+                  watch("rightEyeCyl") || "", 
+                  watch("rightEyeAxis") || ""
+                ) || "Example: +1.00DS/-0.50DCx180"}
+              </div>
+              <FormField
+                control={control}
+                name="rightEyeRefractionNote"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        placeholder="Additional notes"
+                        className="h-full"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
           
@@ -224,15 +242,32 @@ const RefractionForm: React.FC<RefractionFormProps> = ({ control, watch }) => {
               />
             </div>
             
-            {/* Formatted Display */}
-            <div className="mt-4 text-center p-2 bg-slate-50 rounded border">
-              {formatRefractionValue(
-                leftSphPositive,
-                watch("leftEyeSph") || "", 
-                leftCylPositive,
-                watch("leftEyeCyl") || "", 
-                watch("leftEyeAxis") || ""
-              ) || "Example: +1.00DS/-0.50DCx180"}
+            {/* Formatted Display and Additional Input */}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="p-2 bg-slate-50 rounded border flex items-center justify-center text-sm">
+                {formatRefractionValue(
+                  leftSphPositive,
+                  watch("leftEyeSph") || "", 
+                  leftCylPositive,
+                  watch("leftEyeCyl") || "", 
+                  watch("leftEyeAxis") || ""
+                ) || "Example: +1.00DS/-0.50DCx180"}
+              </div>
+              <FormField
+                control={control}
+                name="leftEyeRefractionNote"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        placeholder="Additional notes"
+                        className="h-full"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
         </div>
@@ -329,15 +364,32 @@ const RefractionForm: React.FC<RefractionFormProps> = ({ control, watch }) => {
               />
             </div>
             
-            {/* Formatted Display */}
-            <div className="mt-4 text-center p-2 bg-slate-50 rounded border">
-              {formatRefractionValue(
-                acceptanceRightSphPositive,
-                watch("acceptanceRightSph") || "", 
-                acceptanceRightCylPositive,
-                watch("acceptanceRightCyl") || "", 
-                watch("acceptanceRightAxis") || ""
-              ) || "Example: +1.00DS/-0.50DCx180"}
+            {/* Formatted Display and Additional Input */}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="p-2 bg-slate-50 rounded border flex items-center justify-center text-sm">
+                {formatRefractionValue(
+                  acceptanceRightSphPositive,
+                  watch("acceptanceRightSph") || "", 
+                  acceptanceRightCylPositive,
+                  watch("acceptanceRightCyl") || "", 
+                  watch("acceptanceRightAxis") || ""
+                ) || "Example: +1.00DS/-0.50DCx180"}
+              </div>
+              <FormField
+                control={control}
+                name="acceptanceRightRefractionNote"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        placeholder="Additional notes"
+                        className="h-full"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
           
@@ -428,15 +480,32 @@ const RefractionForm: React.FC<RefractionFormProps> = ({ control, watch }) => {
               />
             </div>
             
-            {/* Formatted Display */}
-            <div className="mt-4 text-center p-2 bg-slate-50 rounded border">
-              {formatRefractionValue(
-                acceptanceLeftSphPositive,
-                watch("acceptanceLeftSph") || "", 
-                acceptanceLeftCylPositive,
-                watch("acceptanceLeftCyl") || "", 
-                watch("acceptanceLeftAxis") || ""
-              ) || "Example: +1.00DS/-0.50DCx180"}
+            {/* Formatted Display and Additional Input */}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="p-2 bg-slate-50 rounded border flex items-center justify-center text-sm">
+                {formatRefractionValue(
+                  acceptanceLeftSphPositive,
+                  watch("acceptanceLeftSph") || "", 
+                  acceptanceLeftCylPositive,
+                  watch("acceptanceLeftCyl") || "", 
+                  watch("acceptanceLeftAxis") || ""
+                ) || "Example: +1.00DS/-0.50DCx180"}
+              </div>
+              <FormField
+                control={control}
+                name="acceptanceLeftRefractionNote"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input 
+                        placeholder="Additional notes"
+                        className="h-full"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
         </div>
