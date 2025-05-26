@@ -1,93 +1,31 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { 
-  PlusCircle, 
-  Calendar, 
-  User, 
-  Settings, 
-  Users, 
-  FileText, 
-  Filter, 
-  ChartBar, 
-  ChartPie, 
-  MapPin 
-} from "lucide-react";
-import { 
-  Card, 
-  CardHeader, 
-  CardFooter, 
-  CardTitle, 
-  CardDescription, 
-  CardContent 
-} from "@/components/ui/card";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell
-} from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious
-} from "@/components/ui/pagination";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip as RechartsTooltip, 
-  Legend, 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell 
-} from "recharts";
+import { PlusCircle, Calendar, User, Settings, Users, FileText, Filter, ChartBar, ChartPie, MapPin } from "lucide-react";
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import driveService from "@/services/GoogleDriveService";
 import { toast } from "sonner";
-
-const DashboardHeader = ({ user }) => {
+const DashboardHeader = ({
+  user
+}) => {
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
-
-  return (
-    <header className="px-4 lg:px-6 h-14 flex items-center border-b">
+  return <header className="px-4 lg:px-6 h-14 flex items-center border-b">
       <div className="flex items-center gap-4 w-full">
-        <img
-          src="/lovable-uploads/d8c03cf5-63b2-4773-a974-6a484df8414b.png"
-          alt="SRMC Logo"
-          className="h-8 w-auto"
-        />
-        <h1 className="text-lg font-semibold">SRIHER Eye Camp Management</h1>
+        <img src="/lovable-uploads/d8c03cf5-63b2-4773-a974-6a484df8414b.png" alt="SRMC Logo" className="h-8 w-auto" />
+        <h1 className="text-lg font-semibold">Eye Camp Management</h1>
         
         <div className="ml-auto flex items-center gap-2">
-          {isAdmin && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigate("/create-camp")}
-              className="hidden md:flex"
-            >
+          {isAdmin && <Button variant="outline" size="sm" onClick={() => navigate("/create-camp")} className="hidden md:flex">
               <PlusCircle className="mr-2 h-4 w-4" />
               Create Camp
-            </Button>
-          )}
+            </Button>}
           
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Settings"
-            onClick={() => navigate("/settings")}
-          >
+          <Button variant="ghost" size="icon" aria-label="Settings" onClick={() => navigate("/settings")}>
             <Settings className="h-5 w-5" />
           </Button>
           
@@ -101,107 +39,103 @@ const DashboardHeader = ({ user }) => {
           </div>
         </div>
       </div>
-    </header>
-  );
+    </header>;
 };
-
 const DashboardPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const {
+    user,
+    logout
+  } = useAuth();
   const navigate = useNavigate();
   const [filterDateRange, setFilterDateRange] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
   const [filterStudent, setFilterStudent] = useState("all");
 
   // Mock camp data with additional metrics
-  const camps = [
-    {
-      id: "1",
-      name: "Rural Eye Camp - April 2025",
-      location: "Kanchipuram District",
-      date: "4/15/2025",
-      description: "Monthly eye screening for rural communities",
-      patients: 45,
-      latitude: 12.8342,
-      longitude: 79.7036,
-      students: ["Aarav Singh", "Priya Patel"],
-      diagnoses: {
-        "Refractive Error": 23,
-        "Cataract": 8,
-        "Glaucoma": 4,
-        "Diabetic Retinopathy": 3,
-        "Other": 7
-      },
-      outcomes: {
-        "Prescription": 32,
-        "Referral": 13
-      }
+  const camps = [{
+    id: "1",
+    name: "Rural Eye Camp - April 2025",
+    location: "Kanchipuram District",
+    date: "4/15/2025",
+    description: "Monthly eye screening for rural communities",
+    patients: 45,
+    latitude: 12.8342,
+    longitude: 79.7036,
+    students: ["Aarav Singh", "Priya Patel"],
+    diagnoses: {
+      "Refractive Error": 23,
+      "Cataract": 8,
+      "Glaucoma": 4,
+      "Diabetic Retinopathy": 3,
+      "Other": 7
     },
-    {
-      id: "2",
-      name: "School Screening - March 2025",
-      location: "Chennai Public School",
-      date: "3/20/2025",
-      description: "Vision screening for school children",
-      patients: 112,
-      latitude: 13.0827,
-      longitude: 80.2707,
-      students: ["Rahul Kumar", "Ananya Sharma", "Vikram Mehta"],
-      diagnoses: {
-        "Refractive Error": 78,
-        "Amblyopia": 12,
-        "Strabismus": 5,
-        "Conjunctivitis": 10,
-        "Other": 7
-      },
-      outcomes: {
-        "Prescription": 92,
-        "Referral": 20
-      }
-    },
-    {
-      id: "3",
-      name: "Corporate Eye Camp - February 2025",
-      location: "TechSpace Solutions",
-      date: "2/10/2025",
-      description: "Vision checkup for corporate employees",
-      patients: 68,
-      latitude: 12.9716,
-      longitude: 77.5946,
-      students: ["Aarav Singh", "Neha Reddy"],
-      diagnoses: {
-        "Refractive Error": 42,
-        "Computer Vision Syndrome": 15,
-        "Dry Eye": 8,
-        "Other": 3
-      },
-      outcomes: {
-        "Prescription": 58,
-        "Referral": 10
-      }
-    },
-    {
-      id: "4",
-      name: "Rural Outreach - January 2025",
-      location: "Villupuram District",
-      date: "1/15/2025",
-      description: "Comprehensive eye care for rural villages",
-      patients: 93,
-      latitude: 11.9401,
-      longitude: 79.4861,
-      students: ["Vikram Mehta", "Priya Patel", "Ananya Sharma"],
-      diagnoses: {
-        "Refractive Error": 47,
-        "Cataract": 25,
-        "Glaucoma": 5,
-        "Pterygium": 9,
-        "Other": 7
-      },
-      outcomes: {
-        "Prescription": 56,
-        "Referral": 37
-      }
+    outcomes: {
+      "Prescription": 32,
+      "Referral": 13
     }
-  ];
+  }, {
+    id: "2",
+    name: "School Screening - March 2025",
+    location: "Chennai Public School",
+    date: "3/20/2025",
+    description: "Vision screening for school children",
+    patients: 112,
+    latitude: 13.0827,
+    longitude: 80.2707,
+    students: ["Rahul Kumar", "Ananya Sharma", "Vikram Mehta"],
+    diagnoses: {
+      "Refractive Error": 78,
+      "Amblyopia": 12,
+      "Strabismus": 5,
+      "Conjunctivitis": 10,
+      "Other": 7
+    },
+    outcomes: {
+      "Prescription": 92,
+      "Referral": 20
+    }
+  }, {
+    id: "3",
+    name: "Corporate Eye Camp - February 2025",
+    location: "TechSpace Solutions",
+    date: "2/10/2025",
+    description: "Vision checkup for corporate employees",
+    patients: 68,
+    latitude: 12.9716,
+    longitude: 77.5946,
+    students: ["Aarav Singh", "Neha Reddy"],
+    diagnoses: {
+      "Refractive Error": 42,
+      "Computer Vision Syndrome": 15,
+      "Dry Eye": 8,
+      "Other": 3
+    },
+    outcomes: {
+      "Prescription": 58,
+      "Referral": 10
+    }
+  }, {
+    id: "4",
+    name: "Rural Outreach - January 2025",
+    location: "Villupuram District",
+    date: "1/15/2025",
+    description: "Comprehensive eye care for rural villages",
+    patients: 93,
+    latitude: 11.9401,
+    longitude: 79.4861,
+    students: ["Vikram Mehta", "Priya Patel", "Ananya Sharma"],
+    diagnoses: {
+      "Refractive Error": 47,
+      "Cataract": 25,
+      "Glaucoma": 5,
+      "Pterygium": 9,
+      "Other": 7
+    },
+    outcomes: {
+      "Prescription": 56,
+      "Referral": 37
+    }
+  }];
 
   // Calculate total patients
   const totalPatients = camps.reduce((sum, camp) => sum + camp.patients, 0);
@@ -217,8 +151,10 @@ const DashboardPage: React.FC = () => {
     });
     return result;
   }, {} as Record<string, number>);
-
-  const diagnosisPieData = Object.entries(diagnosisData).map(([name, value]) => ({ name, value }));
+  const diagnosisPieData = Object.entries(diagnosisData).map(([name, value]) => ({
+    name,
+    value
+  }));
 
   // Prepare outcome data for the pie chart
   const outcomeData = camps.reduce((result, camp) => {
@@ -231,30 +167,41 @@ const DashboardPage: React.FC = () => {
     });
     return result;
   }, {} as Record<string, number>);
-
-  const outcomePieData = Object.entries(outcomeData).map(([name, value]) => ({ name, value }));
+  const outcomePieData = Object.entries(outcomeData).map(([name, value]) => ({
+    name,
+    value
+  }));
 
   // Colors for the pie charts
   const DIAGNOSIS_COLORS = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c', '#d0ed57'];
   const OUTCOME_COLORS = ['#0088FE', '#00C49F'];
 
   // Monthly trends data
-  const monthlyTrendsData = [
-    { month: 'Jan', patients: 93 },
-    { month: 'Feb', patients: 68 },
-    { month: 'Mar', patients: 112 },
-    { month: 'Apr', patients: 45 },
-    { month: 'May', patients: 0 },
-    { month: 'Jun', patients: 0 }
-  ];
-
+  const monthlyTrendsData = [{
+    month: 'Jan',
+    patients: 93
+  }, {
+    month: 'Feb',
+    patients: 68
+  }, {
+    month: 'Mar',
+    patients: 112
+  }, {
+    month: 'Apr',
+    patients: 45
+  }, {
+    month: 'May',
+    patients: 0
+  }, {
+    month: 'Jun',
+    patients: 0
+  }];
   const handleViewCampDetails = (campId: string) => {
     navigate(`/camp/${campId}`);
   };
-
   useEffect(() => {
     const isAuthenticated = driveService.isAuthenticated();
-    
+
     // If admin and not authenticated with Drive, show a toast notification
     if (user?.role === "admin" && !isAuthenticated) {
       toast.info('Connect to Google Drive to enable Excel integration', {
@@ -266,9 +213,7 @@ const DashboardPage: React.FC = () => {
       });
     }
   }, [user, navigate]);
-
-  return (
-    <div className="min-h-screen bg-background p-6">
+  return <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         <DashboardHeader user={user} />
 
@@ -276,13 +221,11 @@ const DashboardPage: React.FC = () => {
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-semibold">Eye Camp Dashboard</h2>
             <div className="flex gap-3">
-              {user?.role === "admin" && (
-                <Button asChild className="bg-green-600 hover:bg-green-700">
+              {user?.role === "admin" && <Button asChild className="bg-green-600 hover:bg-green-700">
                   <Link to="/create-camp">
                     <PlusCircle className="mr-2 h-5 w-5" /> Create New Camp
                   </Link>
-                </Button>
-              )}
+                </Button>}
             </div>
           </div>
 
@@ -297,11 +240,7 @@ const DashboardPage: React.FC = () => {
               <div className="flex flex-wrap gap-4">
                 <div className="w-full md:w-auto">
                   <label className="block text-sm font-medium mb-1">Date Range</label>
-                  <select 
-                    className="w-full p-2 border rounded-md"
-                    value={filterDateRange}
-                    onChange={(e) => setFilterDateRange(e.target.value)}
-                  >
+                  <select className="w-full p-2 border rounded-md" value={filterDateRange} onChange={e => setFilterDateRange(e.target.value)}>
                     <option value="all">All Time</option>
                     <option value="thisYear">This Year</option>
                     <option value="lastYear">Last Year</option>
@@ -311,11 +250,7 @@ const DashboardPage: React.FC = () => {
                 </div>
                 <div className="w-full md:w-auto">
                   <label className="block text-sm font-medium mb-1">Location</label>
-                  <select 
-                    className="w-full p-2 border rounded-md"
-                    value={filterLocation}
-                    onChange={(e) => setFilterLocation(e.target.value)}
-                  >
+                  <select className="w-full p-2 border rounded-md" value={filterLocation} onChange={e => setFilterLocation(e.target.value)}>
                     <option value="all">All Locations</option>
                     <option value="Chennai">Chennai</option>
                     <option value="Kanchipuram">Kanchipuram</option>
@@ -324,11 +259,7 @@ const DashboardPage: React.FC = () => {
                 </div>
                 <div className="w-full md:w-auto">
                   <label className="block text-sm font-medium mb-1">Student Participation</label>
-                  <select 
-                    className="w-full p-2 border rounded-md"
-                    value={filterStudent}
-                    onChange={(e) => setFilterStudent(e.target.value)}
-                  >
+                  <select className="w-full p-2 border rounded-md" value={filterStudent} onChange={e => setFilterStudent(e.target.value)}>
                     <option value="all">All Students</option>
                     <option value="Aarav Singh">Aarav Singh</option>
                     <option value="Priya Patel">Priya Patel</option>
@@ -382,7 +313,7 @@ const DashboardPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {Math.round((outcomeData.Referral / totalPatients) * 100)}%
+                  {Math.round(outcomeData.Referral / totalPatients * 100)}%
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {outcomeData.Referral} patients referred to hospital
@@ -428,17 +359,11 @@ const DashboardPage: React.FC = () => {
                 <div className="h-80 flex justify-center">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie
-                        data={outcomePieData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {outcomePieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={OUTCOME_COLORS[index % OUTCOME_COLORS.length]} />
-                        ))}
+                      <Pie data={outcomePieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({
+                      name,
+                      percent
+                    }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                        {outcomePieData.map((entry, index) => <Cell key={`cell-${index}`} fill={OUTCOME_COLORS[index % OUTCOME_COLORS.length]} />)}
                       </Pie>
                       <RechartsTooltip />
                       <Legend />
@@ -463,18 +388,11 @@ const DashboardPage: React.FC = () => {
                 <div className="h-96 flex justify-center">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie
-                        data={diagnosisPieData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        innerRadius={40}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {diagnosisPieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={DIAGNOSIS_COLORS[index % DIAGNOSIS_COLORS.length]} />
-                        ))}
+                      <Pie data={diagnosisPieData} cx="50%" cy="50%" outerRadius={100} innerRadius={40} dataKey="value" label={({
+                      name,
+                      percent
+                    }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                        {diagnosisPieData.map((entry, index) => <Cell key={`cell-${index}`} fill={DIAGNOSIS_COLORS[index % DIAGNOSIS_COLORS.length]} />)}
                       </Pie>
                       <RechartsTooltip />
                       <Legend />
@@ -526,23 +444,18 @@ const DashboardPage: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {camps.map((camp) => (
-                    <TableRow key={camp.id}>
+                  {camps.map(camp => <TableRow key={camp.id}>
                       <TableCell className="font-medium">{camp.name}</TableCell>
                       <TableCell>{camp.location}</TableCell>
                       <TableCell>{camp.date}</TableCell>
                       <TableCell>{camp.students.length} students</TableCell>
                       <TableCell className="text-right">{camp.patients}</TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          size="sm"
-                          onClick={() => handleViewCampDetails(camp.id)}
-                        >
+                        <Button size="sm" onClick={() => handleViewCampDetails(camp.id)}>
                           View Details
                         </Button>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                    </TableRow>)}
                 </TableBody>
               </Table>
               <div className="mt-4">
@@ -567,8 +480,6 @@ const DashboardPage: React.FC = () => {
           </Card>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default DashboardPage;
